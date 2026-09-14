@@ -11,7 +11,7 @@ internal sealed partial class PadHop
 {
  StackPanel signingHost;
  TextBlock updateStatus;
- Button checkUpdate,installUpdate;
+ Button checkUpdate,downloadUpdate,installUpdate;
  CheckBox autoUpdate;
  bool checkingUpdate;
  DateTime nextUpdateCheck=DateTime.MinValue;
@@ -32,11 +32,12 @@ internal sealed partial class PadHop
   updateStatus=new TextBlock{Text="尚未检查更新。更新来源：GitHub 官方项目 Release。",Margin=new Thickness(0,0,0,12)};updates.Children.Add(updateStatus);
   var actions=new WrapPanel();updates.Children.Add(actions);
   checkUpdate=AboutButton(actions,"检查更新",delegate{CheckUpdates(false);});
+  downloadUpdate=AboutButton(actions,"下载更新",delegate{DownloadUpdate();});downloadUpdate.Visibility=Visibility.Collapsed;
   installUpdate=AboutButton(actions,"安装更新",InstallUpdate);installUpdate.Visibility=Visibility.Collapsed;
-  autoUpdate=new CheckBox{Content="自动更新（检查并下载，安装前确认）",IsChecked=File.Exists(Path.Combine(AppPaths.Data,"automatic-updates.enabled"))};updates.Children.Add(autoUpdate);
-  autoUpdate.Checked+=delegate{if(live){AtomicWrite(Path.Combine(AppPaths.Data,"automatic-updates.enabled"),"enabled");nextUpdateCheck=DateTime.MinValue;CheckUpdates(true);}};
-  autoUpdate.Unchecked+=delegate{if(live){string f=Path.Combine(AppPaths.Data,"automatic-updates.enabled");if(File.Exists(f))File.Delete(f);updateStatus.Text="已关闭自动更新。可以手动检查；不会自动安装。";}};
-  updates.Children.Add(new TextBlock{Text="开启后，运行期间每天检查一次。安装需要管理员确认，自签选项由安装向导确认。",Style=(Style)window.FindResource("Caption")});
+  autoUpdate=new CheckBox{Content="自动检查更新并提示",IsChecked=File.Exists(Path.Combine(AppPaths.Data,"automatic-update-check.enabled"))};updates.Children.Add(autoUpdate);
+  autoUpdate.Checked+=delegate{if(live){AtomicWrite(Path.Combine(AppPaths.Data,"automatic-update-check.enabled"),"enabled");nextUpdateCheck=DateTime.MinValue;CheckUpdates(true);}};
+  autoUpdate.Unchecked+=delegate{if(live){string f=Path.Combine(AppPaths.Data,"automatic-update-check.enabled");if(File.Exists(f))File.Delete(f);updateStatus.Text="已关闭自动检查。仍可手动检查更新。";}};
+  updates.Children.Add(new TextBlock{Text="开启后，启动时及运行期间每 24 小时检查。只提示，不自动下载或安装；下载和安装分别由你点击。",Style=(Style)window.FindResource("Caption")});
   signingHost=AboutCard("本机签名");
   signingHost.Children.Add(new TextBlock{Text="未启用本机自签。需要操作管理员窗口时，可重新运行 install.exe 勾选该组件。",Style=(Style)window.FindResource("Caption")});
   var diagnostics=AboutCard("诊断与日志");var logs=new WrapPanel();diagnostics.Children.Add(logs);
@@ -54,13 +55,23 @@ internal sealed partial class PadHop
    var release=await Task.Run(()=>UpdateRelease.FindNewer(ProductVersion));
    if(release==null){updateStatus.Text="当前已是最新版本（"+ProductVersion+"）。";return;}
    if(automatic && autoUpdate.IsChecked!=true)return;
-   updateStatus.Text="发现 "+release.Version+"，正在下载并校验…";
-   string path=await Task.Run(()=>release.Download(Path.Combine(AppPaths.Data,"updates")));
-   pendingUpdate=release;pendingInstaller=path;installUpdate.Visibility=Visibility.Visible;
-   updateStatus.Text="新版 "+release.Version+" 已下载并通过 SHA-256 校验。点击安装更新继续。";
-   if(automatic && tray!=null)tray.ShowBalloonTip(6000,"PadHop 更新已就绪","打开「关于」页安装新版 "+release.Version+"。",System.Windows.Forms.ToolTipIcon.Info);
+   if(pendingUpdate==null || pendingUpdate.Version!=release.Version){pendingInstaller=null;installUpdate.Visibility=Visibility.Collapsed;}
+   pendingUpdate=release;downloadUpdate.Visibility=Visibility.Visible;
+   updateStatus.Text="发现新版 "+release.Version+"。点击“下载更新”才会下载。";
+   if(automatic && tray!=null)tray.ShowBalloonTip(6000,"PadHop 发现新版","新版 "+release.Version+" 已发布，可在「关于」页查看；尚未下载。",System.Windows.Forms.ToolTipIcon.Info);
   }catch(Exception e){updateStatus.Text="更新未完成："+e.Message+"。可稍后重试或从 GitHub 下载。";}
   finally{checkingUpdate=false;checkUpdate.IsEnabled=true;}
+ }
+ async void DownloadUpdate(){
+  if(pendingUpdate==null || checkingUpdate)return;
+  checkingUpdate=true;checkUpdate.IsEnabled=false;downloadUpdate.IsEnabled=false;installUpdate.IsEnabled=false;
+  try{
+   var release=pendingUpdate;updateStatus.Text="正在下载 "+release.Version+" 并校验…";
+   pendingInstaller=await Task.Run(()=>release.Download(Path.Combine(AppPaths.Data,"updates")));
+   installUpdate.Visibility=Visibility.Visible;
+   updateStatus.Text="新版 "+release.Version+" 已下载并通过 SHA-256 校验。由你点击“安装更新”继续。";
+  }catch(Exception e){updateStatus.Text="下载未完成："+e.Message+"。可重试或从 GitHub 下载。";}
+  finally{checkingUpdate=false;checkUpdate.IsEnabled=true;downloadUpdate.IsEnabled=true;installUpdate.IsEnabled=true;}
  }
  void InstallUpdate(){
   if(pendingUpdate==null || pendingInstaller==null)return;
