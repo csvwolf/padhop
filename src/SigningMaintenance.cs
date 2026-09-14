@@ -21,7 +21,8 @@ internal sealed partial class PadHop
   renewSigning.ToolTip="重新生成一年有效期的本机证书，签署程序并清理旧证书。需要一次管理员确认；完成后重新打开 PadHop，配置保留。";
   renewSigning.Click+=delegate{Guard(RenewSigning);};
   row.Children.Add(signingMessage);row.Children.Add(renewSigning);
-  Get<StackPanel>("DesktopPage").Children.Insert(0,row);
+  if(File.Exists(Path.Combine(Root,".local-signing","state.json")))signingHost.Children.RemoveAt(1);
+  signingHost.Children.Add(row);
   row.Visibility=Visibility.Collapsed;
   window.Loaded+=delegate{nextSigningCheck=DateTime.MinValue;CheckSigningExpiry();};
   CheckSigningExpiry();
@@ -42,7 +43,8 @@ internal sealed partial class PadHop
    signingMessage.Text=(expired?"本机签名已到期，请续期后使用管理员窗口操作。":due?"本机签名即将到期，请安排续期。":"本机签名有效。")+" 到期："+expiry.ToLocalTime().ToString("yyyy-MM-dd")+"。续期需要管理员确认，并会退出 PadHop；配置保留。";
    renewSigning.IsEnabled=true;
    string thumb=Convert.ToString(state["Thumbprint"]);
-   if(due && tray!=null && remindedCertificate!=thumb){remindedCertificate=thumb;tray.ShowBalloonTip(8000,"PadHop · 签名续期",expired?"本机签名已到期，请打开接管状态页续期。":"本机签名将在 30 天内到期，可在接管状态页一键续期。",System.Windows.Forms.ToolTipIcon.Info);}
+   if(due)Get<TextBlock>("CapabilityHint").Text="本机签名"+(expired?"已到期":"即将到期")+"，请在「关于」页续期。";
+   if(due && tray!=null && remindedCertificate!=thumb){remindedCertificate=thumb;tray.ShowBalloonTip(8000,"PadHop · 签名续期",expired?"本机签名已到期，请打开关于页续期。":"本机签名将在 30 天内到期，可在关于页一键续期。",System.Windows.Forms.ToolTipIcon.Info);}
   }catch{signingMessage.Text="本机签名记录异常。请重新运行 install.exe 修复；个人配置保留。";renewSigning.IsEnabled=false;}
  }
  void RenewSigning(){
