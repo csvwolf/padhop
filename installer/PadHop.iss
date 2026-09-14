@@ -47,12 +47,12 @@ Name: "custom"; Description: "自定义安装"; Flags: iscustom
 [Components]
 Name: "app"; Description: "PadHop 主程序"; Types: custom; Flags: fixed
 Name: "xbox"; Description: "Xbox 手柄输出支持（按需安装 ViGEmBus）"; Types: custom
+#if Mode == "standard"
+Name: "localuiaccess"; Description: "管理员窗口操作（本机自签，需确认信任风险）"
+#endif
 
 [Tasks]
 Name: "desktopicon"; Description: "创建桌面快捷方式"; Flags: unchecked
-#if Mode == "standard"
-Name: "localuiaccess"; Description: "本机自签：允许操作管理员窗口（添加本机证书信任，非公共签名）"; Flags: unchecked
-#endif
 
 [Files]
 Source: "{#Root}\.deps\setup\ViGEmBus.exe"; Flags: dontcopy
@@ -86,7 +86,7 @@ var
 function LocalSigningSelected: Boolean;
 begin
 #if Mode == "standard"
-  Result := WizardIsTaskSelected('localuiaccess');
+  Result := WizardIsComponentSelected('localuiaccess');
 #else
   Result := False;
 #endif
@@ -105,14 +105,14 @@ end;
 function NextButtonClick(CurPageID: Integer): Boolean;
 begin
   Result := True;
-  if (CurPageID = wpSelectTasks) and LocalSigningSelected and (not WizardSilent) then begin
+  if (CurPageID = wpSelectComponents) and LocalSigningSelected and (not WizardSilent) then begin
     LocalTrustConsent := MsgBox('不签：PadHop 可以操作普通窗口，不能操作管理员窗口。' + #13#10#13#10 +
       '签了：在此电脑生成代码签名证书并加入本机根证书信任库，允许 PadHop 通过 UIAccess 操作管理员窗口。Steam 不需要管理员启动。' + #13#10#13#10 +
       '风险：新增的证书信任对本机所有用户生效；若程序或输入流程被滥用，可能影响管理员程序。自签不能证明公共发布者身份，也不保证消除安全软件提示。' + #13#10#13#10 +
       '私钥正常完成后会删除，不导出、不上传。证书一年到期；升级前还原，卸载时移除本项目证书，也可手动撤销。不会关闭 UAC 或更改 Secure Boot。' + #13#10#13#10 +
       '是否明确同意本次本机信任变更？', mbConfirmation, MB_YESNO or MB_DEFBUTTON2) = IDYES;
     Result := LocalTrustConsent;
-    if not Result then WizardForm.TasksList.Checked[WizardForm.TasksList.Items.Count - 1] := False;
+    if not Result then WizardForm.ComponentsList.Checked[WizardForm.ComponentsList.Items.Count - 1] := False;
   end;
 end;
 
@@ -143,11 +143,13 @@ begin
   WizardForm.WelcomeLabel2.Caption := '让 Steam Controller 2 在更多地方用得上，也用得顺手。' + #13#10#13#10 + '默认支持普通窗口。可在安装时选择本机自签，经明确同意后启用管理员窗口操作；下一步会说明区别与风险。';
 #endif
   WizardForm.WelcomeLabel2.Caption := WizardForm.WelcomeLabel2.Caption + #13#10#13#10 + '安装会保留个人配置。Xbox 输出驱动可在下一步选择；已有驱动会保留。';
-  WizardForm.SelectComponentsLabel.Caption := 'Xbox 输出需要 ViGEmBus；只使用键鼠时可以取消。驱动来自官方最终版 1.22.0，已停止维护。卸载 PadHop 时会保留共享驱动，避免影响其他软件。';
-  WizardForm.SelectTasksLabel.Height := ScaleY(56);
-  WizardForm.TasksList.Height := WizardForm.TasksList.Top + WizardForm.TasksList.Height - (WizardForm.SelectTasksLabel.Top + ScaleY(68));
-  WizardForm.TasksList.Top := WizardForm.SelectTasksLabel.Top + ScaleY(68);
-  WizardForm.SelectTasksLabel.Caption := '不勾选本机自签：仅操作普通窗口。勾选后：本机信任 PadHop 签名，可操作管理员窗口。下一步会说明证书信任变更及风险，并要求明确确认。';
+  WizardForm.SelectComponentsLabel.Height := ScaleY(100);
+  WizardForm.TypesCombo.Top := WizardForm.SelectComponentsLabel.Top + ScaleY(108);
+  WizardForm.ComponentsList.Height := WizardForm.ComponentsList.Top + WizardForm.ComponentsList.Height - (WizardForm.TypesCombo.Top + WizardForm.TypesCombo.Height + ScaleY(8));
+  WizardForm.ComponentsList.Top := WizardForm.TypesCombo.Top + WizardForm.TypesCombo.Height + ScaleY(8);
+  WizardForm.SelectComponentsLabel.Caption := '不选本机自签：仅操作普通窗口。选中：添加本机证书信任，可操作管理员窗口；下一步需确认风险。' + #13#10 +
+    '以后可重新运行 install.exe，勾选以启用，取消勾选以撤销；个人配置保留。' + #13#10 +
+    'Xbox 输出使用已停止维护的官方 ViGEmBus 1.22.0；只用键鼠可不选。卸载保留共享驱动。';
 end;
 
 function PrepareToInstall(var NeedsRestart: Boolean): String;
@@ -161,7 +163,7 @@ begin
     end;
     if WizardSilent then LocalTrustConsent := ExpandConstant('{param:ACCEPTLOCALTRUST|NO}') = 'YES';
     if not LocalTrustConsent then begin
-      Result := '尚未明确同意本机信任变更。静默安装需同时指定 /TASKS=localuiaccess 和 /ACCEPTLOCALTRUST=YES。';
+      Result := '尚未明确同意本机信任变更。静默安装需同时指定 /COMPONENTS=app,localuiaccess 和 /ACCEPTLOCALTRUST=YES。';
       exit;
     end;
   end;

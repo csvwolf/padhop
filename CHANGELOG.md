@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.2 — experimental
+
+- 本机自签移至安装组件选择页；明确说明重新运行安装程序可启用或撤销，个人配置保留。
+- 静默安装改用组件参数，仍要求显式同意本机信任变更。
+
 ## 0.2.1 — experimental
 
 - Add opt-in local signing in the installer with explicit trust disclosure, one-year local certificates, private-key cleanup, rollback and uninstall cleanup.

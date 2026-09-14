@@ -1,4 +1,4 @@
-﻿# Real trust-store tests are restricted to an expendable GitHub-hosted Windows runner.
+# Real trust-store tests are restricted to an expendable GitHub-hosted Windows runner.
 if($env:GITHUB_ACTIONS -ne 'true'){throw 'Run only on a disposable GitHub Actions Windows runner.'}
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot -Parent
@@ -8,7 +8,8 @@ $admin=([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity
 if(!$admin){throw 'Disposable runner must be an administrator.'}
 $setup=Join-Path $root 'dist\install.exe'
 function RunInstall([string]$tasks,[bool]$accept,[bool]$expectSuccess){
- $args=@('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/NOICONS','/COMPONENTS=app',('/TASKS='+$tasks),('/LOG="'+(Join-Path $env:RUNNER_TEMP 'padhop-install.log')+'"'))
+ $components='app';if($tasks){$components+=','+$tasks}
+ $args=@('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/NOICONS',('/COMPONENTS='+$components),'/TASKS=',('/LOG="'+(Join-Path $env:RUNNER_TEMP 'padhop-install.log')+'"'))
  if($accept){$args+='/ACCEPTLOCALTRUST=YES'}
  Write-Host ('Testing installer tasks='+$tasks+' accept='+$accept)
  $p=Start-Process $setup -ArgumentList $args -WindowStyle Hidden -PassThru
