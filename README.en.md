@@ -1,4 +1,4 @@
-<div align="center">
+﻿<div align="center">
   <img src="assets/app.png" alt="Talaria icon" width="96" height="96" />
   <h1>Talaria · Steam Controller utility</h1>
   <p>Make Steam Controller 2 useful in more places.</p>
@@ -17,7 +17,7 @@
 
 A Windows input utility for Steam Controller 2: global and per-app profiles, independent trackpads and haptics, keyboard/mouse bindings, Windows shortcuts, macros, the system on-screen keyboard, and optional virtual Xbox controller output. This is an independent project, not affiliated with Valve.
 
-**0.2.5 experimental release: Bluetooth SC2 is the current supported connection.** USB/receiver connections and Steam Deck/Moonlight forwarded controllers are not currently supported. Protocol and firmware differences need hardware testing; automated tests cannot establish compatibility with every game.
+**0.2.6 experimental release: Bluetooth SC2 is the current supported connection.** USB/receiver connections and Steam Deck/Moonlight forwarded controllers are not currently supported. Protocol and firmware differences need hardware testing; automated tests cannot establish compatibility with every game.
 
 ## Installation
 
@@ -61,3 +61,9 @@ Talaria is [MIT licensed](LICENSE). Trackpad behavior references SteamlessContro
 ## Upgrading from PadHop
 
 Talaria is the new name for PadHop. Run the new `install.exe` to upgrade in place. Settings, language preference and installation identity are retained; internal directories still use `PadHop`. Older updaters do not accept the renamed download URL: download this upgrade manually from Releases once. Automatic checks only notify; downloading and installing remain explicit actions.
+
+## Scrolling and game prompts
+
+Each scrolling trackpad has independent wheel/natural direction and reversal buffering (default 0.4%; 0 disables it). Small reverse jitter is ignored. These settings are saved with the whole profile. New profiles copy current edits; the mouse starter preset includes Steamless reference feel.
+
+With Steam closed, virtual Xbox takeover temporarily disables the selected SC2 firmware keyboard/mouse emulation, preventing duplicate gamepad and keyboard events. Leaving the active app, pausing or exiting normally restores firmware defaults. Settings are not overwritten while Steam is running: avoid competing Steam/Talaria mappings. Explicit keyboard/mouse bindings such as L4 → Win still intentionally switch game prompts.

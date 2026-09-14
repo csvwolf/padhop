@@ -11,6 +11,7 @@ using System.Windows.Forms;
 // Read-only probe. Direct HID access is opt-in; never writes controller reports.
 internal static class Probe
 {
+    static readonly object logGate=new object();
     internal static string FatalError;
     internal static StreamWriter Log;
     internal static string Match = "";
@@ -20,11 +21,14 @@ internal static class Probe
     internal static bool AllReports;
     internal static BridgePreview Preview;
     internal static void Say(string s)
-    {
-        if(!DiagnosticLog && !Testing){string category=new string(s.TakeWhile(c=>char.IsLetterOrDigit(c)||c=='_').Take(40).ToArray());if(category.Length==0)category="EVENT";DateTime prior;if(lastEvent.TryGetValue(category,out prior) && (DateTime.UtcNow-prior).TotalSeconds<5)return;lastEvent[category]=DateTime.UtcNow;s=category;}string line = DateTime.UtcNow.ToString("o") + " " + s;if(logBytes>2*1024*1024)return;logBytes+=Encoding.UTF8.GetByteCount(line)+2;
+    {lock(logGate){
+        if(!DiagnosticLog && !Testing){string category=new string(s.TakeWhile(c=>char.IsLetterOrDigit(c)||c=='_').Take(40).ToArray());if(category.Length==0)category="EVENT";DateTime prior;if(lastEvent.TryGetValue(category,out prior) && (DateTime.UtcNow-prior).TotalSeconds<5)return;lastEvent[category]=DateTime.UtcNow;s=category;}WriteLog(s);
+    }}
+    internal static void InputSummary(bool active,bool xbox,int standalone,long reports,long keys,long mouse,long gameButtons){WriteLog("INPUT_SUMMARY active="+active+" xbox="+xbox+" standalone="+standalone+" reports="+reports+" keyEvents="+keys+" mouseEvents="+mouse+" mappedGameButtonEvents="+gameButtons);}
+    static void WriteLog(string s){lock(logGate){string line = DateTime.UtcNow.ToString("o") + " " + s;if(logBytes>2*1024*1024)return;logBytes+=Encoding.UTF8.GetByteCount(line)+2;
         Console.WriteLine(line);
         if (Log != null) Log.WriteLine(line);
-    }
+    }}
     [STAThread] static int Main(string[] args)
     {
         try
@@ -62,7 +66,7 @@ internal static class Probe
             }
             if(DiagnosticLog && (Continuous || Seconds>300))throw new ArgumentException("Detailed diagnostics require --seconds 300 or less, without --continuous");
             if(devicesJson!=null){var rows=new List<object>();foreach(var d in Devices.Enumerate(false).Values)if(DeviceGate.IsSc2(d.Type,d.Vid,d.Pid,d.Page,d.Usage))rows.Add(new {Path=d.Path,Pid=d.Pid,Label=DeviceGate.FriendlyName(d.Path)});File.WriteAllText(devicesJson,new System.Web.Script.Serialization.JavaScriptSerializer().Serialize(rows));return 0;}
-            if (test) { BindingEngine.Test();PadSources.Test();StickSources.Test();VirtualGamepad.Test(); DeviceGate.Test(); Decoder.Test(); MappingTests.Run();ButtonEdge.Test(); DualPads.Test();PointerFeelTests.Run();SteamlessCadence.Test(); return 0; }
+            if (test) { StandaloneInputLease.Test();BindingEngine.Test();PadSources.Test();StickSources.Test();VirtualGamepad.Test(); DeviceGate.Test(); Decoder.Test(); MappingTests.Run();ButtonEdge.Test(); DualPads.Test();PointerFeelTests.Run();SteamlessCadence.Test(); return 0; }
             if(outputTest){KeyboardOutputTest.Run();return 0;}
             if(virtualTest){VirtualGamepad.DeviceTest();return 0;}
             if(keyboardTest){BridgeClient.KeyboardTest();return 0;}
@@ -267,7 +271,7 @@ internal sealed class Observer : NativeWindow, IDisposable
 internal static class Decoder
 {
     // Independent C# implementation of the layouts documented by SDL (see SOURCES.md).
-    static readonly string[] names = { "A", "B", "X", "Y", "QAM", "R3", "VIEW", "R4", "R5", "RB", "DOWN", "RIGHT", "LEFT", "UP", "MENU", "L3", "STEAM", "L4", "L5", "LB", "RStickTouch", "RPadTouch", "RPadClick", "RTClick", "LStickTouch", "LPadTouch", "LPadClick", "LTClick", "RGTouch", "LGTouch", "unknown30", "unknown31" };
+    static readonly string[] names = { "A", "B", "X", "Y", "QAM", "R3", "MENU", "R4", "R5", "RB", "DOWN", "RIGHT", "LEFT", "UP", "VIEW", "L3", "STEAM", "L4", "L5", "LB", "RStickTouch", "RPadTouch", "RPadClick", "RTClick", "LStickTouch", "LPadTouch", "LPadClick", "LTClick", "RGTouch", "LGTouch", "unknown30", "unknown31" };
     internal static string Names(uint mask)
     {
         var parts = new List<string>(); for (int b = 0; b < 32; b++) if ((mask & (1u << b)) != 0) parts.Add(names[b]);

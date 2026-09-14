@@ -6,6 +6,8 @@ using System.Windows.Media;
 internal sealed partial class PadHop {
  void Explain(TextBlock label,string text){string help=ParameterHelp(text);if(help==null)return;help=help.Replace("。", "。\n").Trim();label.Inlines.Add(new Run("  ?"){Foreground=new SolidColorBrush(Color.FromRgb(97,205,250)),FontWeight=FontWeights.Bold});label.ToolTip=new ToolTip{Background=new SolidColorBrush(Color.FromRgb(28,43,56)),Foreground=Brushes.White,BorderBrush=new SolidColorBrush(Color.FromRgb(64,93,114)),Padding=new Thickness(12),Content=new TextBlock{Text=help,MaxWidth=300,TextWrapping=TextWrapping.Wrap,LineHeight=22,Foreground=Brushes.White}};ToolTipService.SetInitialShowDelay(label,180);ToolTipService.SetShowDuration(label,30000);System.Windows.Automation.AutomationProperties.SetHelpText(label,help);}
  string ParameterHelp(string label){
+ if(label.StartsWith(L.T("换向缓冲")))return L.T("换向时需要越过的小范围，按触摸板完整纵向行程的百分比计算。调大可避免手抖反滚，但主动换向需要多滑一点。0 关闭换向缓冲；不改变持续同向滚动的速度。默认 0.4%。");
+ if(label==L.T("滚动方向"))return L.T("滚轮方向：手指上滑，页面向上滚。自然方向：手指上滑，内容跟着手指向上移动，页面向下滚。左右触摸板独立保存。");
  if(label.StartsWith(L.T("触摸缓冲")))return L.T("刚接触触摸板后，暂缓滑动反馈多久。调大更能避开按压准备动作，调小滑动反馈来得更快。只影响 Steamless 触觉规则，不延迟鼠标移动。");
  if(label.StartsWith(L.T("松开缓冲")))return L.T("点击松开后，暂停滑动反馈多久。调大可减少松开后的杂震，调小更快恢复滑动反馈。不会延迟松开反馈或鼠标移动。");
  if(label.StartsWith(L.T("按压避让阈值")))return L.T("压力高于此值时不触发滑动震动，避免按压时混入滑动点振。调低更保守，调高允许较重的手指继续得到滑动反馈。不是鼠标点击的按下力度。");

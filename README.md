@@ -1,4 +1,4 @@
-<div align="center">
+﻿<div align="center">
   <img src="assets/app.png" alt="Talaria 图标" width="96" height="96" />
   <h1>Talaria · Steam Controller 工具</h1>
   <p>让 Steam Controller 2 在更多地方用得上，也用得顺手。</p>
@@ -17,7 +17,7 @@
 
 Windows 上的控制器输入配置工具：全局与单独应用配置、左右触摸板、键鼠映射、组合快捷键、宏、屏幕键盘，以及可选 Xbox 虚拟手柄输出。独立开发项目，与 Valve 无隶属关系。
 
-**0.2.5 实验版：目前优先支持蓝牙 SC2。** USB/接收器、Steam Deck/Moonlight 转发设备不属于当前支持范围。协议与固件差异仍需实机验证，离线测试不能证明所有游戏兼容。
+**0.2.6 实验版：目前优先支持蓝牙 SC2。** USB/接收器、Steam Deck/Moonlight 转发设备不属于当前支持范围。协议与固件差异仍需实机验证，离线测试不能证明所有游戏兼容。
 
 ## 安装与使用
 
@@ -54,3 +54,9 @@ Talaria 使用 [MIT](LICENSE)。触摸板算法参考 SteamlessController，虚�
 ## 从 PadHop 升级
 
 Talaria 是 PadHop 的新名称。运行新版 `install.exe` 即可覆盖升级；配置、语言偏好和安装标识保留，内部目录仍使用 `PadHop`。旧版更新器不兼容改名后的下载地址，请从本仓库 Release 手动下载一次。自动更新功能仍仅检查并提示，不会自动下载安装。
+
+## 滚动与游戏提示
+
+触摸板选择“滚动内容”后可分别选择滚轮方向或自然方向，并调整换向缓冲（默认 0.4%，0 为关闭）。小幅反向抖动不会立刻回滚；方向与缓冲随整份配置保存。新建配置复制当前编辑内容，鼠标模式已包含 Steamless 参考手感。
+
+无 Steam 时启用虚拟 Xbox 输出，Talaria 会暂时关闭所选 SC2 的固件键鼠模拟，防止手柄键与键盘事件同时进入游戏；离开接管应用、暂停或正常退出时恢复。Steam 运行时不会改写其设置；如使用 Steam，需要避免它与 Talaria 同时输出同一套映射。自己配置的键鼠动作（例如 L4 → Win）仍会让游戏切换提示。

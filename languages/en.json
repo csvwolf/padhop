@@ -684,5 +684,19 @@
   "本机签名已续期，旧证书和本次私钥已删除。请重新打开 Talaria；个人配置已保留。": "Local signing renewed. The old certificate and new private key were deleted. Reopen Talaria; profiles are retained.",
   "续期未完成：": "Renewal failed: ",
   "。请重新运行 install.exe 并勾选本机自签进行修复。": ". Run install.exe again and select local signing to repair it.",
-  "Talaria · 本机签名续期": "Talaria · Local-signing renewal"
+  "Talaria · 本机签名续期": "Talaria · Local-signing renewal",
+  "换向缓冲必须在 0–3% 之间。": "Reversal buffer must be between 0 and 3%.",
+  "换向缓冲 %（0–3）": "Reversal buffer % (0–3)",
+  "滚动方向": "Scroll direction",
+  "滚轮方向 · 上滑向上滚": "Wheel direction · swipe up to scroll up",
+  "自然方向 · 上滑向下滚": "Natural direction · swipe up to scroll down",
+  "换向缓冲": "Reversal buffer",
+  "换向时需要越过的小范围，按触摸板完整纵向行程的百分比计算。调大可避免手抖反滚，但主动换向需要多滑一点。0 关闭换向缓冲；不改变持续同向滚动的速度。默认 0.4%。": "Distance required to reverse direction, as a percentage of full vertical trackpad travel. Increase to avoid accidental reverse scrolling; intentional reversal then needs slightly more travel. 0 disables the buffer. Does not change speed in the current direction. Default: 0.4%.",
+  "滚轮方向：手指上滑，页面向上滚。自然方向：手指上滑，内容跟着手指向上移动，页面向下滚。左右触摸板独立保存。": "Wheel direction: swipe up to scroll the page up. Natural direction: swipe up to move content upward and scroll the page down. Each trackpad stores its own direction.",
+  "新建配置…": "New profile…",
+  "新建配置": "New profile",
+  " · 副本": " · Copy",
+  "已基于当前编辑内容新建配置，尚未应用。": "Created a profile from the current edits. Not applied yet.",
+  "新建测试": "New profile test",
+  "接管时供游戏识别为 Xbox 手柄。Steam 未运行时，暂停 SC2 原生键鼠模拟，停止接管后恢复；自定义键鼠绑定仍会输出。": "Games receive a virtual Xbox controller. When Steam is closed, SC2 firmware keyboard/mouse emulation is paused during takeover and restored afterward. Your custom keyboard/mouse bindings still work."
 }

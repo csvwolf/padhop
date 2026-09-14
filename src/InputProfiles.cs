@@ -18,7 +18,7 @@ public sealed class MacroStroke {
 }
 public static class InputCatalog {
  public static readonly string[] Buttons={"A","B","X","Y","LB","RB","LT","RT","VIEW","MENU","L3","R3","UP","DOWN","LEFT","RIGHT","L4","L5","R4","R5","LG","RG","QAM"};
- static readonly int[] Bits={0,1,2,3,19,9,27,23,6,14,15,5,13,10,12,11,17,18,7,8,29,28,4};
+ static readonly int[] Bits={0,1,2,3,19,9,27,23,14,6,15,5,13,10,12,11,17,18,7,8,29,28,4};
  public static uint Mask(string button){int i=Array.IndexOf(Buttons,button);return i<0?0:1u<<Bits[i];}
  public static readonly string[] Gamepad={"A","B","X","Y","LB","RB","LT","RT","VIEW","MENU","L3","R3","UP","DOWN","LEFT","RIGHT"};
  public static readonly string[] Mouse={"left","right","middle","x1","x2","wheelUp","wheelDown"};

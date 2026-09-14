@@ -20,14 +20,14 @@ internal sealed class BridgePreview
     bool active;
     long lastReport;
     string target = "unknown";
-    BridgeClient client;VirtualGamepad gamepad;
+    BridgeClient client;VirtualGamepad gamepad;StandaloneInputLease standalone;
     bool useHelper, helperPreview, failed;
-    long heartbeat;
+    long heartbeat,summaryAt,reportCount,keyCount,mouseCount,gameButtonCount;
     TouchFeedback feedback; IntPtr feedbackDevice; bool feedbackFailed, touchingRight;
     readonly FeedbackCadence cadence=new FeedbackCadence();
     internal void EnableHelper(bool dry) { useHelper = true; helperPreview = dry; }
     internal void Start() { if (useHelper) client = new BridgeClient(targets, helperPreview, settingsPath); }
-    internal void Close() { if(gamepad!=null){gamepad.Dispose();gamepad=null;} if(dual!=null){dual.Dispose();dual=null;} if(feedback!=null) { Probe.Say("HAPTICS ticks="+feedback.Sent+" error="+(feedback.Error??"none")); feedback.Dispose(); feedback=null; } if (client != null) { client.Dispose(); client = null; } }
+    internal void Close() {if(standalone!=null){standalone.Dispose();standalone=null;} Probe.InputSummary(active,gamepad!=null,standalone==null?0:standalone.State,reportCount,keyCount,mouseCount,gameButtonCount); if(gamepad!=null){gamepad.Dispose();gamepad=null;} if(dual!=null){dual.Dispose();dual=null;} if(feedback!=null) { Probe.Say("HAPTICS ticks="+feedback.Sent+" error="+(feedback.Error??"none")); feedback.Dispose(); feedback=null; } if (client != null) { client.Dispose(); client = null; } }
     internal void AddTarget(string path)
     {
         if (!Path.IsPathRooted(path) || !File.Exists(path)) throw new ArgumentException("preview-target must be an existing absolute EXE path");
@@ -38,11 +38,12 @@ internal sealed class BridgePreview
         stickSources.Reset();padSources.Reset();if(bindings!=null)Emit(ownership.Mix(bindings.Reset(),1),reason);touchingRight=false; cadence.Reset(); if(feedback!=null)feedback.Clear();
         Emit(ownership.Mix(dual==null?engine.Reset():dual.Reset(),0), reason);ownership.Clear();
         Transmit("Reset");
-        if(gamepad!=null){if(detach){gamepad.Dispose();gamepad=null;}else gamepad.Neutral();}
+        if(gamepad!=null){if(detach){if(standalone!=null){standalone.Dispose();standalone=null;}gamepad.Dispose();gamepad=null;}else gamepad.Neutral();}
         device = IntPtr.Zero;
     }
     internal void Poll()
     {
+        if(clock.ElapsedMilliseconds-summaryAt>=5000){summaryAt=clock.ElapsedMilliseconds;Probe.InputSummary(active,gamepad!=null,standalone==null?0:standalone.State,reportCount,keyCount,mouseCount,gameButtonCount);}
         IntPtr current = GetForegroundWindow(); uint currentPid;
         GetWindowThreadProcessId(current, out currentPid);
         bool permitted = !failed && current != IntPtr.Zero && (settings == null ? targets.Contains(ProcessPath(currentPid) ?? "") : settings.Allows(ProcessPath(currentPid), current));
@@ -69,7 +70,7 @@ internal sealed class BridgePreview
         if (device != IntPtr.Zero && device != handle) return;
         device = handle; lastReport = clock.ElapsedMilliseconds;
         uint bits; bool decoded=Decoder.Decode(bytes,out bits)!=null;touchingRight=decoded && (bits&0x200000)!=0;
-        if(decoded && currentBook!=null && currentBook.VirtualOutputEnabled && currentBook.NeedsVirtualGamepad && useHelper && !helperPreview){if(gamepad==null)gamepad=new VirtualGamepad(currentBook);gamepad.Update(bytes,bits);}
+        if(decoded && currentBook!=null && currentBook.VirtualOutputEnabled && currentBook.NeedsVirtualGamepad && useHelper && !helperPreview){if(gamepad==null){gamepad=new VirtualGamepad(currentBook);if(!StandaloneInputLease.SteamRunning())standalone=new StandaloneInputLease(handle);}gamepad.Update(bytes,bits);reportCount++;}
         Emit(ownership.Mix(dual==null?engine.Step(bytes):dual.Step(bytes,handle,window,useHelper && !helperPreview),0), "mapped");
         if(decoded && bindings!=null){Emit(stickSources.Mouse(currentBook,bytes,clock.ElapsedMilliseconds),"stick");ulong sources=dual==null?bits:padSources.Read(currentBook,bytes,bits,dual.Pressed(0),dual.Pressed(1));Emit(ownership.Mix(bindings.Step(sources,clock.ElapsedMilliseconds),1),"button");}
     }
@@ -83,6 +84,9 @@ internal sealed class BridgePreview
     }
     void Transmit(string action)
     {
+        if(action.StartsWith("KeyDown") || action.StartsWith("KeyUp") || action=="ToggleKeyboard")keyCount++;
+        if(action.StartsWith("Move ") || action.StartsWith("Wheel ") || action.StartsWith("MouseDown") || action.StartsWith("MouseUp") || action=="LeftDown" || action=="LeftUp" || action=="RightDown" || action=="RightUp")mouseCount++;
+        if(action.StartsWith("GameDown") || action.StartsWith("GameUp"))gameButtonCount++;
         if(action.StartsWith("GameDown button=") || action.StartsWith("GameUp button=")){if(gamepad!=null)gamepad.Button(action.Substring(action.IndexOf('=')+1),action.StartsWith("GameDown"));return;}
         if (client == null) return;
         try {

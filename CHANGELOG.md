@@ -1,4 +1,14 @@
-# Changelog
+﻿# Changelog
+
+## 0.2.6
+
+- Correct physical Menu/View input bit routing.
+- New profiles copy current edits; the mouse starter preset includes Steamless feel, without a separate automatically added reference preset.
+
+- Pause SC2 firmware keyboard/mouse emulation during standalone virtual Xbox takeover and restore it on release. Never overwrite settings while Steam is running.
+- Add per-trackpad scroll inversion and reversal hysteresis to suppress jitter without losing fine same-direction scrolling.
+- Reset scroll state on release, press and focus changes. Persist direction and buffer with profiles.
+- Add local numeric input summaries (no keys or paths) to diagnose gamepad/keyboard prompt switching; Metaphor now keeps controller prompts in the user's BLE/no-Steam test.
 
 ## 0.2.5 — Talaria
 
