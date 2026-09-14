@@ -30,8 +30,10 @@ function CheckSigned {
   if($s.Status -ne 'Valid' -or $s.SignerCertificate.Thumbprint -ne $state.Thumbprint){throw 'Invalid local binary signature'}
  }
  $p=Start-Process (Join-Path $app 'PadHop.Input.exe') -ArgumentList '--check-uiaccess' -WindowStyle Hidden -PassThru
- if(!$p.WaitForExit(15000)){throw 'Token check timed out'}
- if($p.ExitCode){throw 'Windows did not grant TokenUIAccess'}
+ try {
+  if(!$p.WaitForExit(15000)){throw 'Token check timed out'}
+  if($p.ExitCode){throw 'Windows did not grant TokenUIAccess'}
+ } finally {$p.Dispose()}
  return $state.Thumbprint
 }
 RunInstall 'localuiaccess' $false $false

@@ -157,8 +157,10 @@ try {
  SaveState $root $state
  foreach($n in $files){Copy-Item -LiteralPath (Join-Path $root ('.local-signing\staged\'+$n)) -Destination (Join-Path $root $n) -Force}
  $probe=Start-Process (Join-Path $root 'PadHop.Input.exe') -ArgumentList '--check-uiaccess' -WindowStyle Hidden -PassThru
- if(!$probe.WaitForExit(15000)){$probe.Kill();throw 'UIAccess 检测超时。'}
- if($probe.ExitCode -ne 0){throw 'Windows 未授予 UIAccess；可能被设备策略限制。'}
+ try {
+  if(!$probe.WaitForExit(15000)){$probe.Kill();throw 'UIAccess 检测超时。'}
+  if($probe.ExitCode -ne 0){throw 'Windows 未授予 UIAccess；可能被设备策略限制。'}
+ } finally {$probe.Dispose()}
  $state.Status='Enabled';SaveState $root $state
  '已启用本机 UIAccess。证书指纹：'+$cert.Thumbprint
 }catch{
