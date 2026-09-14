@@ -35,12 +35,12 @@ internal sealed class Capture : Form
     }
     internal Capture()
     {
-        Text="SC2 · 左板事件采集";ClientSize=new Size(760,270);Font=new Font("Microsoft YaHei UI",10);StartPosition=FormStartPosition.CenterScreen;
-        var hint=new Label{Text="保留 Steam 左触摸板配置；采集时暂停其他震动测试工具。\n无需重连。准备阶段会发几下轻微右板反馈，自动核对通道；不发送键鼠输入。"};hint.SetBounds(18,15,720,60);Controls.Add(hint);
-        full.Text="完整采集（60 秒）";full.SetBounds(18,90,225,40);Controls.Add(full);
-        raw.Text="先检查采集通路（8 秒）";raw.SetBounds(260,90,225,40);Controls.Add(raw);
-        stop.Text="停止并保存";stop.SetBounds(502,90,225,40);stop.Enabled=false;Controls.Add(stop);
-        info.SetBounds(18,150,720,110);info.Text="完整采集会临时开启 HID 内容记录，可能包含蓝牙密钥和其他设备数据；仅存本机，结束恢复记录开关。无需关闭或重连手柄。";Controls.Add(info);
+        Text=L.T("SC2 · 左板事件采集");ClientSize=new Size(760,270);Font=new Font("Microsoft YaHei UI",10);StartPosition=FormStartPosition.CenterScreen;
+        var hint=new Label{Text=L.T("保留 Steam 左触摸板配置；采集时暂停其他震动测试工具。\n无需重连。准备阶段会发几下轻微右板反馈，自动核对通道；不发送键鼠输入。")};hint.SetBounds(18,15,720,60);Controls.Add(hint);
+        full.Text=L.T("完整采集（60 秒）");full.SetBounds(18,90,225,40);Controls.Add(full);
+        raw.Text=L.T("先检查采集通路（8 秒）");raw.SetBounds(260,90,225,40);Controls.Add(raw);
+        stop.Text=L.T("停止并保存");stop.SetBounds(502,90,225,40);stop.Enabled=false;Controls.Add(stop);
+        info.SetBounds(18,150,720,110);info.Text=L.T("完整采集会临时开启 HID 内容记录，可能包含蓝牙密钥和其他设备数据；仅存本机，结束恢复记录开关。无需关闭或重连手柄。");Controls.Add(info);
         full.Click+=delegate{Begin(true);};raw.Click+=delegate{Begin(true,8);};stop.Click+=delegate{Finish();};
         FormClosing+=delegate(object sender,FormClosingEventArgs e){if(csv!=null || waiting || finishing){e.Cancel=true;Finish();}};
         timer.Interval=200;timer.Tick+=delegate{Poll();};timer.Start();
@@ -51,7 +51,7 @@ internal sealed class Capture : Form
         try {
             if(Beginning!=null)Beginning();
             int count=0; string targetPath="";foreach(Device d in Devices.Enumerate(false).Values)if(d.Vid==0x28de && d.Pid==0x1303 && d.Page==0xff00 && d.Usage==1 && (SelectedPath==null || string.Equals(SelectedPath,d.Path,StringComparison.OrdinalIgnoreCase))){device=d.Handle;targetPath=d.Path;count++;}
-            if(count!=1)throw new Exception("需要连接一个 SC2 蓝牙控制器，当前匹配 "+count+" 个。");
+            if(count!=1)throw new Exception(L.T("需要连接一个 SC2 蓝牙控制器，当前匹配 ")+count+L.T(" 个。"));
             targetDevicePath=targetPath;
             folder=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"PadHop","captures",DateTime.Now.ToString("yyyyMMdd-HHmmss")+"-"+Guid.NewGuid().ToString("N").Substring(0,6));Directory.CreateDirectory(folder);
             var mac=System.Text.RegularExpressions.Regex.Match(targetPath,@"_([0-9a-fA-F]{12})&Col",System.Text.RegularExpressions.RegexOptions.IgnoreCase); File.WriteAllText(Path.Combine(folder,"target.json"),"{\"bluetooth_mac\":\""+(mac.Success?mac.Groups[1].Value.ToLowerInvariant():"")+"\"}");
@@ -61,9 +61,9 @@ internal sealed class Capture : Form
             if(withTrace){
                 var psi=new ProcessStartInfo("powershell.exe",TraceArguments(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"Record-Bluetooth.ps1"),folder));
                 psi.UseShellExecute=true;psi.Verb="runas";psi.WindowStyle=ProcessWindowStyle.Hidden;
-                Process.Start(psi);waiting=true;deadline=DateTime.UtcNow.AddSeconds(45);info.Text="等待蓝牙采集启动。确认管理员提示后，请按窗口提示操作。";
+                Process.Start(psi);waiting=true;deadline=DateTime.UtcNow.AddSeconds(45);info.Text=L.T("等待蓝牙采集启动。确认管理员提示后，请按窗口提示操作。");
             }else OpenRaw();
-        }catch(Exception e){info.Text="未开始："+e.Message;full.Enabled=raw.Enabled=true;stop.Enabled=false;if(ResultFile!=null){File.WriteAllText(ResultFile+".error",e.ToString());Dispose();Application.ExitThread();}}
+        }catch(Exception e){info.Text=L.T("未开始：")+e.Message;full.Enabled=raw.Enabled=true;stop.Enabled=false;if(ResultFile!=null){File.WriteAllText(ResultFile+".error",e.ToString());Dispose();Application.ExitThread();}}
     }
     void OpenRaw()
     {
@@ -77,19 +77,19 @@ internal sealed class Capture : Form
     string Phase(){double s=elapsed.Elapsed.TotalSeconds;return s<10?"prepare":s<15?"idle":s<30?"slow_slide":s<45?"fast_slide":s<55?"press_release":"idle_end";}
     void Poll()
     {
-        if(ResultFile!=null){File.WriteAllText(ResultFile+".progress",info.Text.Replace("左触摸板",RecordRight?"右触摸板":"左触摸板").Replace("左板",RecordRight?"右板":"左板"));if(File.Exists(ResultFile+".stop"))Finish();}
+        if(ResultFile!=null){File.WriteAllText(ResultFile+".progress",info.Text.Replace("left trackpad",RecordRight?"right trackpad":"left trackpad").Replace("left pad",RecordRight?"right pad":"left pad").Replace(L.T("左触摸板"),RecordRight?L.T("右触摸板"):L.T("左触摸板")).Replace(L.T("左板"),RecordRight?L.T("右板"):L.T("左板")));if(File.Exists(ResultFile+".stop"))Finish();}
         try {
             if(waiting){if(File.Exists(Path.Combine(folder,"trace.error.txt")))throw new Exception(File.ReadAllText(Path.Combine(folder,"trace.error.txt")));
-                if(File.Exists(Path.Combine(folder,"trace.ready")))OpenRaw();else if(DateTime.UtcNow>deadline)throw new Exception("等待启动超时；已请求结束采集。");}
+                if(File.Exists(Path.Combine(folder,"trace.ready")))OpenRaw();else if(DateTime.UtcNow>deadline)throw new Exception(L.T("等待启动超时；已请求结束采集。"));}
             if(csv!=null){csv.Flush();
                 if(tracing && File.Exists(Path.Combine(folder,"trace.done"))){sawDone=true;Finish();return;}
                 if(elapsed.Elapsed.TotalSeconds>=durationSeconds){Finish();return;}
-                string p=Phase();string hint=p=="prepare"?"自动核对通道中：右板可能轻震几下，请先松手等待，不用重连。":p=="idle" || p=="idle_end"?"请松开左板，保持静止。":p=="slow_slide"?"请缓慢滑动左触摸板。":p=="fast_slide"?"请快速滑动左触摸板。":"请反复按下、松开左触摸板。";
-                info.Text=hint+"\n剩余 "+Math.Max(0,durationSeconds-(int)elapsed.Elapsed.TotalSeconds)+" 秒；已记录 "+samples+" 条输入。";
+                string p=Phase();string hint=p=="prepare"?L.T("自动核对通道中：右板可能轻震几下，请先松手等待，不用重连。"):p=="idle" || p=="idle_end"?L.T("请松开左板，保持静止。"):p=="slow_slide"?L.T("请缓慢滑动左触摸板。"):p=="fast_slide"?L.T("请快速滑动左触摸板。"):L.T("请反复按下、松开左触摸板。");
+                info.Text=hint+L.T("\n剩余 ")+Math.Max(0,durationSeconds-(int)elapsed.Elapsed.TotalSeconds)+L.T(" 秒；已记录 ")+samples+L.T(" 条输入。");
             }
-            if(finishing && File.Exists(Path.Combine(folder,"trace.done"))){finishing=false; if(SessionCompleted!=null)SessionCompleted(folder);full.Enabled=raw.Enabled=true;stop.Enabled=false;info.Text="已保存："+folder+"\n"+(File.Exists(Path.Combine(folder,"trace.error.txt"))?"蓝牙采集失败，查看 trace.error.txt；输入记录仍保留。":sawDone?"蓝牙记录提前结束；输入同步停止，请检查 trace.log。":"下一步解析蓝牙日志；成功保存不代表已捕获震动载荷。");}
-            else if(finishing && DateTime.UtcNow>deadline){finishing=false;full.Enabled=raw.Enabled=true;stop.Enabled=false;info.Text="蓝牙记录收尾未确认。请查看 trace.log 和 trace-instance.txt；输入文件已经保存。";}
-        }catch(Exception e){Finish();info.Text="采集停止："+e.Message+"\n文件："+folder;}
+            if(finishing && File.Exists(Path.Combine(folder,"trace.done"))){finishing=false; if(SessionCompleted!=null)SessionCompleted(folder);full.Enabled=raw.Enabled=true;stop.Enabled=false;info.Text=L.T("已保存：")+folder+"\n"+(File.Exists(Path.Combine(folder,"trace.error.txt"))?L.T("蓝牙采集失败，查看 trace.error.txt；输入记录仍保留。"):sawDone?L.T("蓝牙记录提前结束；输入同步停止，请检查 trace.log。"):L.T("下一步解析蓝牙日志；成功保存不代表已捕获震动载荷。"));}
+            else if(finishing && DateTime.UtcNow>deadline){finishing=false;full.Enabled=raw.Enabled=true;stop.Enabled=false;info.Text=L.T("蓝牙记录收尾未确认。请查看 trace.log 和 trace-instance.txt；输入文件已经保存。");}
+        }catch(Exception e){Finish();info.Text=L.T("采集停止：")+e.Message+L.T("\n文件：")+folder;}
     }
     void Finish()
     {
@@ -97,12 +97,12 @@ internal sealed class Capture : Form
         if(calibrationCancel!=null){calibrationCancel.Cancel();calibrationCancel=null;}
         if(registered){Native.RegisterRawInputDevices(new Native.Registration[]{new Native.Registration{Page=0xff00,Usage=1,Flags=1,Target=IntPtr.Zero}},1,(uint)Marshal.SizeOf(typeof(Native.Registration)));registered=false;}
         if(csv!=null){csv.Dispose();csv=null;}waiting=false;elapsed.Stop();
-        if(tracing){File.WriteAllText(Path.Combine(folder,"stop.request"),"stop");finishing=true;deadline=DateTime.UtcNow.AddMinutes(2);info.Text="正在停止蓝牙记录并保存…";}
-        else {full.Enabled=raw.Enabled=true;stop.Enabled=false;info.Text="输入已保存："+folder+"\n仅输入模式不包含 Steam 发出的震动指令。";}
+        if(tracing){File.WriteAllText(Path.Combine(folder,"stop.request"),"stop");finishing=true;deadline=DateTime.UtcNow.AddMinutes(2);info.Text=L.T("正在停止蓝牙记录并保存…");}
+        else {full.Enabled=raw.Enabled=true;stop.Enabled=false;info.Text=L.T("输入已保存：")+folder+L.T("\n仅输入模式不包含 Steam 发出的震动指令。");}
     }
     protected override void WndProc(ref Message m)
     {
-        if(m.Msg==0xff && csv!=null)try{Receive(m.LParam);}catch(Exception e){Finish();info.Text="输入错误："+e.Message;}
+        if(m.Msg==0xff && csv!=null)try{Receive(m.LParam);}catch(Exception e){Finish();info.Text=L.T("输入错误：")+e.Message;}
         base.WndProc(ref m);
     }
     void Receive(IntPtr input)

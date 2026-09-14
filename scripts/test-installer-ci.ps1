@@ -7,9 +7,9 @@ if(Test-Path $app){throw 'Refusing to test against an existing installation.'}
 $admin=([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 if(!$admin){throw 'Disposable runner must be an administrator.'}
 $setup=Join-Path $root 'dist\install.exe'
-function RunInstall([string]$tasks,[bool]$accept,[bool]$expectSuccess){
+function RunInstall([string]$tasks,[bool]$accept,[bool]$expectSuccess,[string]$language='en'){
  $components='app';if($tasks){$components+=','+$tasks}
- $args=@('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/NOICONS',('/COMPONENTS='+$components),'/TASKS=',('/LOG="'+(Join-Path $env:RUNNER_TEMP 'padhop-install.log')+'"'))
+ $args=@('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/NOICONS',('/LANG='+$language),('/COMPONENTS='+$components),'/TASKS=',('/LOG="'+(Join-Path $env:RUNNER_TEMP 'padhop-install.log')+'"'))
  if($accept){$args+='/ACCEPTLOCALTRUST=YES'}
  Write-Host ('Testing installer tasks='+$tasks+' accept='+$accept)
  $p=Start-Process $setup -ArgumentList $args -WindowStyle Hidden -PassThru
@@ -57,7 +57,7 @@ $renewed=CheckSigned
 if((Get-FileHash -LiteralPath $fixture).Hash -ne $configHash){throw 'Renewal changed user configuration'}
 if($renewed -eq $first -or (Test-Path ('Cert:\LocalMachine\Root\'+$first))){throw 'Renewal retained old identity or trust'}
 $first=$renewed
-RunInstall '' $false $true
+RunInstall '' $false $true 'zhcn'
 if(Test-Path ('Cert:\LocalMachine\Root\'+$first)){throw 'Upgrade retained old local trust'}
 if(Test-Path (Join-Path $app '.local-signing\state.json')){throw 'Upgrade retained old signing state'}
 RunInstall 'localuiaccess' $true $true

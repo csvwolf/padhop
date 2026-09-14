@@ -14,7 +14,7 @@ internal sealed class UpdateRelease
  internal long Size;
  internal static UpdateRelease Parse(string json,string current){
   var releases=new JavaScriptSerializer().DeserializeObject(json) as object[];
-  if(releases==null)throw new Exception("更新信息格式无效");
+  if(releases==null)throw new Exception(L.T("更新信息格式无效"));
   System.Version newest=System.Version.Parse(current);UpdateRelease selected=null;
   foreach(var item in releases){
    var release=item as Dictionary<string,object>;if(release==null || Convert.ToBoolean(release["draft"]))continue;
@@ -34,19 +34,19 @@ internal sealed class UpdateRelease
   ServicePointManager.SecurityProtocol|=SecurityProtocolType.Tls12;
   var request=(HttpWebRequest)WebRequest.Create(url);request.UserAgent="PadHop-Updater";request.Timeout=30000;request.ReadWriteTimeout=30000;
   using(var response=(HttpWebResponse)request.GetResponse()){
-   if(response.ResponseUri.Scheme!="https" || response.ContentLength>limit)throw new Exception("更新响应不符合要求");
+   if(response.ResponseUri.Scheme!="https" || response.ContentLength>limit)throw new Exception(L.T("更新响应不符合要求"));
    using(var stream=response.GetResponseStream())using(var result=new MemoryStream()){
-    var buffer=new byte[65536];int count;while((count=stream.Read(buffer,0,buffer.Length))>0){if(result.Length+count>limit)throw new Exception("更新文件超过大小限制");result.Write(buffer,0,count);}return result.ToArray();
+    var buffer=new byte[65536];int count;while((count=stream.Read(buffer,0,buffer.Length))>0){if(result.Length+count>limit)throw new Exception(L.T("更新文件超过大小限制"));result.Write(buffer,0,count);}return result.ToArray();
    }
   }
  }
  internal string Download(string folder){
   Directory.CreateDirectory(folder);string path=Path.Combine(folder,"install-"+Version+".exe");
-  byte[] bytes=Fetch(Url,(int)Size);if(bytes.LongLength!=Size)throw new Exception("更新文件下载不完整");
-  using(var hash=SHA256.Create()){if(BitConverter.ToString(hash.ComputeHash(bytes)).Replace("-","").ToLowerInvariant()!=Digest.ToLowerInvariant())throw new Exception("更新文件校验失败");}
+  byte[] bytes=Fetch(Url,(int)Size);if(bytes.LongLength!=Size)throw new Exception(L.T("更新文件下载不完整"));
+  using(var hash=SHA256.Create()){if(BitConverter.ToString(hash.ComputeHash(bytes)).Replace("-","").ToLowerInvariant()!=Digest.ToLowerInvariant())throw new Exception(L.T("更新文件校验失败"));}
   File.WriteAllBytes(path,bytes);return path;
  }
- internal void Verify(string path){if(new FileInfo(path).Length!=Size)throw new Exception("更新文件已改变，请重新检查更新");using(var stream=File.OpenRead(path))using(var hash=SHA256.Create()){if(!string.Equals(BitConverter.ToString(hash.ComputeHash(stream)).Replace("-",""),Digest,StringComparison.OrdinalIgnoreCase))throw new Exception("更新文件已改变，请重新检查更新");}}
+ internal void Verify(string path){if(new FileInfo(path).Length!=Size)throw new Exception(L.T("更新文件已改变，请重新检查更新"));using(var stream=File.OpenRead(path))using(var hash=SHA256.Create()){if(!string.Equals(BitConverter.ToString(hash.ComputeHash(stream)).Replace("-",""),Digest,StringComparison.OrdinalIgnoreCase))throw new Exception(L.T("更新文件已改变，请重新检查更新"));}}
  internal static void Test(){
   string asset="{\"draft\":false,\"tag_name\":\"v9.0.0\",\"assets\":[{\"name\":\"install.exe\",\"size\":12,\"digest\":\"sha256:"+new string('a',64)+"\",\"browser_download_url\":\"https://github.com/csvwolf/padhop/releases/download/v9.0.0/install.exe\"}]}";
   if(Parse("["+asset+"]","1.0.0")==null || Parse("["+asset+"]","9.0.0")!=null || Parse("["+asset.Replace("github.com/csvwolf","github.com/other")+"]","1.0.0")!=null || Parse("["+asset.Replace("sha256:","invalid:")+"]","1.0.0")!=null)throw new Exception("Update provenance/version test");

@@ -103,7 +103,7 @@ internal sealed class BridgePreview
         catch (Exception e)
         {
             failed = true; active = false; Close(); engine.Reset(); device = IntPtr.Zero;
-            Probe.FatalError="输入辅助程序连接断开："+e.Message;
+            Probe.FatalError=L.T("输入辅助程序连接断开：")+e.Message;
             Probe.Say("HELPER STOPPED " + e.Message + "; restart required, no automatic reconnect.");
         }
     }

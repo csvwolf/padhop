@@ -27,12 +27,18 @@ $xaml=Join-Path $bin 'source\Main.xaml'
 [IO.File]::WriteAllText($xaml,([IO.File]::ReadAllText($xaml) -replace '实验版 · \d+\.\d+\.\d+',('实验版 · '+$version)),[Text.UTF8Encoding]::new($true))
 Copy-Item (Join-Path $root 'assets\app.png'),(Join-Path $root 'assets\app.ico') (Join-Path $bin 'assets') -Force
 $wpf=@('PresentationFramework.dll','PresentationCore.dll','WindowsBase.dll') | ForEach-Object {'/r:'+(Join-Path $framework ('WPF\'+$_))}
+$localization=@((Join-Path $root 'src\Localization.cs'))
+$translationSource=Join-Path $metadataDir 'Translations.cs'
+$catalog=Get-Content (Join-Path $root 'languages\en.json') -Raw | ConvertFrom-Json
+$entries=@($catalog.PSObject.Properties | ForEach-Object { '{'+(ConvertTo-Json -InputObject $_.Name -Compress)+','+(ConvertTo-Json -InputObject ([string]$_.Value) -Compress)+'}' })
+[IO.File]::WriteAllText($translationSource,('using System.Collections.Generic; internal static partial class L {static readonly Dictionary<string,string> English=new Dictionary<string,string>{'+($entries -join ',')+'};}'),[Text.UTF8Encoding]::new($true))
+$localization+=$translationSource
 $front=Get-ChildItem (Join-Path $root 'src') -Filter '*.cs' | ForEach-Object FullName
-& $csc /nologo /target:winexe /main:PadHop /platform:x64 /warnaserror+ /r:System.Xaml.dll /r:System.Drawing.dll /r:System.Windows.Forms.dll /r:System.Web.Extensions.dll $wpf ('/win32icon:'+(Join-Path $root 'assets\app.ico')) ('/out:'+(Join-Path $bin 'PadHop.exe')) $metadata $front
+& $csc /nologo /target:winexe /main:PadHop /platform:x64 /warnaserror+ /r:System.Xaml.dll /r:System.Drawing.dll /r:System.Windows.Forms.dll /r:System.Web.Extensions.dll $wpf ('/win32icon:'+(Join-Path $root 'assets\app.ico')) ('/out:'+(Join-Path $bin 'PadHop.exe')) $metadata $translationSource $front
 if($LASTEXITCODE){throw 'UI build failed'}
 $engine=Get-ChildItem (Join-Path $root 'src\engine') -Filter '*.cs' | ForEach-Object FullName
 $shared=@('PadProfiles.cs','InputProfiles.cs','InputLayout.cs') | ForEach-Object {Join-Path $root ('src\'+$_)}
-& $csc /nologo /target:exe /platform:x64 /warnaserror+ /r:System.Windows.Forms.dll /r:System.Web.Extensions.dll ('/out:'+(Join-Path $bin 'PadHop.Engine.exe')) $metadata $engine $shared
+& $csc /nologo /target:exe /platform:x64 /warnaserror+ /r:System.Windows.Forms.dll /r:System.Web.Extensions.dll ('/out:'+(Join-Path $bin 'PadHop.Engine.exe')) $metadata $localization $engine $shared
 if($LASTEXITCODE){throw 'Engine build failed'}
 $options=if($UiAccess){@('/win32manifest:'+(Join-Path $root 'src\helper\uiaccess.manifest'))}else{@('/define:STANDARD')}
 & $csc /nologo /target:winexe /platform:x64 /warnaserror+ $options ('/out:'+(Join-Path $bin 'PadHop.Input.exe')) $metadata (Join-Path $root 'src\helper\Helper.cs') (Join-Path $root 'src\engine\MouseWire.cs') (Join-Path $root 'src\engine\DesktopSettings.cs')
@@ -48,7 +54,7 @@ if($UiAccess){
 $mode=if($UiAccess){'uiaccess'}else{'standard'}
 Set-Content (Join-Path $bin 'input-mode.txt') $mode -Encoding ASCII
 $capture=Get-ChildItem (Join-Path $root 'tools\capture\src') -Filter '*.cs' | ForEach-Object FullName
-& $csc /nologo /target:winexe /platform:x64 /warnaserror+ /r:System.Windows.Forms.dll /r:System.Drawing.dll /r:System.Web.Extensions.dll /main:Capture ('/out:'+(Join-Path $bin 'capture\SC2CaptureWorker.exe')) $metadata $capture
+& $csc /nologo /target:winexe /platform:x64 /warnaserror+ /r:System.Windows.Forms.dll /r:System.Drawing.dll /r:System.Web.Extensions.dll /main:Capture ('/out:'+(Join-Path $bin 'capture\SC2CaptureWorker.exe')) $metadata $localization $capture
 if($LASTEXITCODE){throw 'Capture build failed'}
 New-Item -ItemType Directory -Force (Join-Path $bin 'capture\tools') | Out-Null
 & $csc /nologo /target:exe /platform:x64 /warnaserror+ ('/out:'+(Join-Path $bin 'capture\tools\SC2LoggingRefresh.exe')) $metadata (Join-Path $root 'tools\capture\src\LoggingRefresh.cs')
@@ -56,8 +62,10 @@ if($LASTEXITCODE){throw 'Capture refresh build failed'}
 Copy-Item (Join-Path $root 'tools\capture\*.py'),(Join-Path $root 'tools\capture\Record-Bluetooth.ps1'),(Join-Path $root 'tools\capture\Recover-Capture.ps1'),(Join-Path $root 'tools\capture\BluetoothStack.wprp') (Join-Path $bin 'capture') -Force
 & (Join-Path $bin 'PadHop.Engine.exe') --self-test
 if($LASTEXITCODE){throw 'Engine tests failed'}
-$t=Start-Process (Join-Path $bin 'PadHop.exe') -ArgumentList '--self-test' -PassThru -WindowStyle Hidden -Wait
-if($t.ExitCode){throw 'UI tests failed (temporary PadHop-tests directory contains error)'}
+foreach($locale in @('zh-CN','en')){
+ $t=Start-Process (Join-Path $bin 'PadHop.exe') -ArgumentList '--self-test',('--language='+$locale) -PassThru -WindowStyle Hidden
+ try{if(!$t.WaitForExit(30000) -or $t.ExitCode){throw ('UI tests failed: '+$locale)}}finally{$t.Dispose()}
+}
 'Build and synthetic tests passed: '+$bin+' ('+$mode+')'
 
 # Optional local UIAccess payload stays unsigned until the end user explicitly opts in.
@@ -75,3 +83,6 @@ foreach($name in @('PadHop.exe','PadHop.Engine.exe','PadHop.Input.exe')){
 @{Product='PadHop';Version=$version;Hashes=$hashes} | ConvertTo-Json -Depth 4 | Set-Content (Join-Path $localPayload 'payload.json') -Encoding UTF8
 Copy-Item (Join-Path $root 'scripts\Local-Signing.ps1') $bin -Force
 Copy-Item (Join-Path $root 'scripts\Renew-LocalSigning.ps1') $bin -Force
+
+Copy-Item (Join-Path $root 'scripts\Language.ps1') $bin -Force
+Copy-Item (Join-Path $root 'languages') $bin -Recurse -Force

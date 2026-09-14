@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 internal sealed class StickSources {
  double? last;double fx,fy;
