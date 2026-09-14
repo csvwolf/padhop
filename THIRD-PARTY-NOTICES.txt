@@ -1,0 +1,25 @@
+SteamlessController — Copyright (c) 2026 Dylan Deverill, MIT License.
+Source: https://github.com/ddeverill/SteamlessController
+Reference commit: 50114dff5e70f3b4094b76a972d9c2b068710d44
+Referenced src/app/TrackpadInput.cpp and .h: direct relative movement with fractional carry (0.01125), fine-grained wheel accumulation (0.02). Adapted for existing per-pad configuration, authenticated UIAccess transport, independent pressure clicks, and optional legacy whole-detent scrolling.
+Full license: licenses/SteamlessController-MIT.txt
+The reference preset preserves existing haptics and button assignments. It disables smoothing, inertia, click-stability pause and drag slowdown, and sets wheel distance to 6000 with fine scrolling. System wheel-line normalization and horizontal scrolling are not ported; Windows scroll settings still affect the result.
+
+Haptic adaptation also references src/app/ControllerManager.cpp and src/steam/SteamController.cpp at the same commit. Reference defaults: command 1 TICK / command 2 CLICK at 0 dB, 50 ms minimum movement interval, 6500 raw units travel, 45-unit deadzone, 4000-unit maximum step, area gate 900. Press/release confirmation and touch/release/idle grace periods are converted from upstream 250 Hz frame counts to elapsed time (8/16/48/180/120 ms) for Bluetooth. These timing conversions and this app's pressure-based mouse click mapping are adaptations, not a claim of identical device behavior. User edits can override waveforms, cadence, grace periods, and pressure gate. The app keeps each actuator separate and a single pending feedback slot instead of a backlog.
+
+ViGEmClient — Copyright (c) 2017-2023 Nefarius Software Solutions e.U. and Contributors, MIT License.
+Native x64 library extracted unchanged from official NuGet Nefarius.ViGEm.Client 1.21.256, embedded resource costura64.vigemclient.dll.
+Source package: https://api.nuget.org/v3-flatcontainer/nefarius.vigem.client/1.21.256/nefarius.vigem.client.1.21.256.nupkg
+Native library SHA256: 00303F99E1968D523FBD08A7C691D60D145B7335059EC593947841D124C10875
+Full license: licenses/ViGEmClient-MIT.txt
+An existing ViGEmBus driver is reused. The native installer can optionally install the official ViGEmBus setup when absent; no controller hiding is performed.
+
+BluetoothStack.wprp — Copyright Microsoft Corporation, MIT. See licenses/busiotools-MIT.txt and tools/capture/PROVENANCE.txt. BTETLParse.exe is not bundled.
+
+ViGEmBus official Setup 1.22.0 — BSD 3-Clause, Nefarius Software Solutions e.U.
+Source: https://github.com/nefarius/ViGEmBus/releases/tag/v1.22.0
+Unmodified installer SHA256: 89220A7865076B342892F98865F3499FB7C4CFD673159E89D352C360FD014C6A
+License: licenses/ViGEmBus.txt. Driver is shared and retained on PadHop uninstall.
+
+Inno Setup 6.7.3 — Jordan Russell and Martijn Laan. https://jrsoftware.org/
+License: licenses/InnoSetup.txt. Chinese translation is vendored unchanged from jrsoftware/issrc tag is-6_7_3, Files/Languages/Unofficial/ChineseSimplified.isl; author notices retained.

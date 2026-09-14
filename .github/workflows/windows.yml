@@ -1,0 +1,82 @@
+name: Windows build
+on:
+  push:
+    branches: [master]
+    tags: ['v*']
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: windows-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v7.0.0
+        with:
+          python-version: '3.12'
+      - name: Validate release version and branch
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          $version=(Get-Content VERSION -Raw).Trim()
+          if($env:RELEASE_TAG -ne ('v'+$version)){throw 'Tag must match VERSION'}
+          git merge-base --is-ancestor HEAD origin/master
+          if($LASTEXITCODE){throw 'Release commit must be on master'}
+      - name: Build and test
+        shell: powershell
+        run: |
+          ./scripts/build.ps1
+          ./scripts/test.ps1 -Python (Get-Command python).Source
+          ./scripts/bootstrap-installer.ps1
+          ./scripts/build-installer.ps1
+      - uses: actions/upload-artifact@v7.0.1
+        with:
+          name: PadHop-installer
+          path: dist/install.exe
+          if-no-files-found: error
+          retention-days: 14
+  release:
+    if: startsWith(github.ref, 'refs/tags/v') && github.event_name == 'push'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8.0.1
+        with:
+          name: PadHop-installer
+          path: release
+      - name: Publish experimental release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          hash=$(sha256sum release/install.exe | cut -d ' ' -f 1)
+          cat > notes.md <<'NOTES'
+          下载 **install.exe**，按中文向导安装；升级直接运行新版安装程序。
+
+          - Windows 10 1903+ / Windows 11 x64，.NET Framework 4.8。
+          - 可选安装 ViGEmBus；已有驱动会跳过，卸载保留个人配置与共享驱动。
+          - **标准实验版，仅支持普通窗口。尚未加入可信发布签名，不能操作管理员窗口。**
+          - 安装器需要管理员权限；离线测试通过不代表所有设备、游戏已实测。
+          NOTES
+          printf '\nSHA-256 (`install.exe`): `%s`\n' "$hash" >> notes.md
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            echo 'Release already exists; refusing to replace published binaries.'
+            exit 1
+          fi
+          gh release create "$RELEASE_TAG" release/install.exe --verify-tag --title "PadHop $RELEASE_TAG · 标准实验版" --notes-file notes.md --prerelease --latest=false

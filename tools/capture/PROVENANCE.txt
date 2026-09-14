@@ -1,0 +1,8 @@
+BTETLParse.exe provenance
+Source package: https://download.microsoft.com/download/e/e/e/eeed3cd5-bdbd-47db-9b8e-ca9d2df2cd29/BluetoothTestPlatformPack-1.14.0.msi
+Publisher: Microsoft Corporation
+MSI and extracted x64 BTETLParse.exe Authenticode: Valid at preparation time.
+Only the analysis executable was extracted locally; the MSI installer was not executed.
+Documentation: https://learn.microsoft.com/en-us/windows-hardware/drivers/bluetooth/testing-btp-tools-btetlparse
+BluetoothStack.wprp: https://raw.githubusercontent.com/microsoft/busiotools/master/bluetooth/tracing/BluetoothStack.wprp
+Vendored busiotools commit: 5a5af1effb2d7583238e87265d6636c521c6709b

@@ -1,0 +1,25 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+internal sealed class DualPads : IDisposable {
+ readonly SteamlessCadence[] cadence={new SteamlessCadence(),new SteamlessCadence()};
+ readonly PadBook book; readonly MappingEngine[] maps=new MappingEngine[2];readonly bool[] down=new bool[2],touch=new bool[2],seed=new bool[2];readonly int[] px=new int[2],py=new int[2];readonly double[] scroll=new double[2],distance=new double[2];readonly long[] last=new long[]{-1000,-1000};bool sentLeft,sentRight;readonly Stopwatch clock=Stopwatch.StartNew();LiveFeedback[] feedback=new LiveFeedback[2];bool feedbackFailed;
+ internal DualPads(PadBook b){book=b;for(int i=0;i<2;i++){var p=Profile(i);maps[i]=new MappingEngine(new DesktopSettings{DragScale=p.DragScale,Speed=p.Speed,SmoothMs=p.Smooth,Friction=p.Friction,Inertia=p.Inertia,PressureClick=true,HardwarePadClick=true,PressThreshold=p.Press,ReleaseThreshold=p.Release,ClickStableMs=p.StableMs,LeftScroll=false});}}
+ internal bool Pressed(int i){return down[i];}
+ PadProfile Profile(int i){return i==0?book.Left:book.Right;}
+ internal List<string> Reset(){for(int i=0;i<2;i++){maps[i].Reset();cadence[i].Reset();down[i]=touch[i]=seed[i]=false;scroll[i]=distance[i]=0;last[i]=-1000;if(feedback[i]!=null)feedback[i].Clear();}var a=new List<string>();if(sentLeft)a.Add("LeftUp");if(sentRight)a.Add("RightUp");sentLeft=sentRight=false;return a;}
+ internal List<string> Step(byte[] raw,IntPtr device,IntPtr window,bool haptics){uint bits;if(Decoder.Decode(raw,out bits)==null)return new List<string>();var result=new List<string>();int pad=raw[0]==0x47?20:18;
+  for(int i=0;i<2;i++){var p=Profile(i);bool t=(bits&(i==0?0x02000000u:0x00200000u))!=0;int offset=pad+i*6,x=BitConverter.ToInt16(raw,offset),y=BitConverter.ToInt16(raw,offset+2);var data=(byte[])raw.Clone();Array.Copy(raw,offset,data,pad+6,6);bool physicalClick=(bits&(i==0?0x04000000u:0x00400000u))!=0;Array.Copy(BitConverter.GetBytes((t?0x00200000u:0u)|(physicalClick?0x00400000u:0u)),0,data,2,4);data[6]=data[7]=0; // No trigger mapping; both buttons belong to pad presses.
+   bool wasDown=down[i];foreach(string action in maps[i].Step(data)){if(action=="LeftDown")down[i]=true;else if(action=="LeftUp")down[i]=false;else if(action.StartsWith("Move ") && p.Action=="mouse")result.Add(action);}
+   double moved=seed[i] && t && touch[i]?Math.Sqrt((double)(x-px[i])*(x-px[i])+(double)(y-py[i])*(y-py[i]))*.02:0;
+   if(p.Action=="scroll" && seed[i] && t && touch[i] && !down[i]){double unit=p.FineScroll?120:1;scroll[i]+=(y-py[i])/p.ScrollUnits*unit;int limit=p.FineScroll?4080:34;int n=Math.Max(-limit,Math.Min(limit,(int)scroll[i]));scroll[i]-=n;if(n!=0)result.Add("Wheel delta="+(p.FineScroll?n:n*120));}
+   if(!t)scroll[i]=0;
+   bool click=wasDown!=down[i];WaveSpec wave=null;if(p.SteamlessHaptics){int ev=cadence[i].Step(t,(bits&(i==0?0x04000000u:0x00400000u))!=0,x,y,BitConverter.ToUInt16(raw,offset+4),clock.ElapsedMilliseconds,p.Interval,p.Spacing/.02,p.TouchGraceMs,p.ReleaseGraceMs,p.MotionPressureLimit);click=ev==2 || ev==3;wave=ev==1?p.Motion:ev==2?p.PressWave:ev==3?p.ReleaseWave:null;}else if(click){distance[i]=0;wave=down[i]?p.PressWave:p.ReleaseWave;}else if(!t || moved<.4 || down[i])distance[i]=0;else{distance[i]+=moved;if(distance[i]>=p.Spacing && clock.ElapsedMilliseconds-last[i]>=p.Interval){wave=p.Motion;distance[i]=0;}}
+   if(wave!=null && haptics && !feedbackFailed){byte[] packet=wave.Packet(i==0);if(packet!=null)try{if(feedback[i]==null)feedback[i]=new LiveFeedback(device,i==0);if(feedback[i].Error!=null)throw new Exception(feedback[i].Error);feedback[i].Queue(packet,window,click);last[i]=clock.ElapsedMilliseconds;}catch(Exception e){feedbackFailed=true;Probe.Say("HAPTICS DISABLED "+e.Message);}}
+   if((!t || down[i]) && feedback[i]!=null && !click)feedback[i].ClearMotion();touch[i]=t;seed[i]=true;px[i]=x;py[i]=y;
+  }
+  bool left=(down[0] && book.Left.Click=="left") || (down[1] && book.Right.Click=="left"),right=(down[0] && book.Left.Click=="right") || (down[1] && book.Right.Click=="right");if(left!=sentLeft){result.Add(left?"LeftDown":"LeftUp");sentLeft=left;}if(right!=sentRight){result.Add(right?"RightDown":"RightUp");sentRight=right;}return result;
+ }
+ public void Dispose(){foreach(var f in feedback)if(f!=null)f.Dispose();}
+ internal static void Test(){PadBook.Test();var p=new PadBook();using(var d=new DualPads(p)){byte[] r=new byte[48];r[0]=0x45;Array.Copy(BitConverter.GetBytes(0x02200000u),0,r,2,4);d.Step(r,IntPtr.Zero,IntPtr.Zero,false);r[22]=0xa0;r[23]=0x0f;var a=d.Step(r,IntPtr.Zero,IntPtr.Zero,false);if(!a.Contains("RightDown") || a.Contains("LeftDown"))throw new Exception("Left pad must right-click");r[28]=0xa0;r[29]=0x0f;if(!d.Step(r,IntPtr.Zero,IntPtr.Zero,false).Contains("LeftDown"))throw new Exception("Right pad must left-click");a=d.Reset();if(!a.Contains("LeftUp") || !a.Contains("RightUp"))throw new Exception("Reset releases both buttons");r[22]=r[23]=r[28]=r[29]=0;r[6]=0xff;r[7]=0x7f;d.Step(r,IntPtr.Zero,IntPtr.Zero,false);if(d.Step(r,IntPtr.Zero,IntPtr.Zero,false).Exists(s=>s.EndsWith("Down")))throw new Exception("Triggers must stay unbound");}}
+}
