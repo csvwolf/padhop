@@ -43,6 +43,20 @@ RunInstall '' $false $true
 if((Get-Content (Join-Path $app 'input-mode.txt') -Raw).Trim() -ne 'standard'){throw 'Default install modified trust mode'}
 RunInstall 'localuiaccess' $true $true
 $first=CheckSigned
+$data=Join-Path $env:LOCALAPPDATA 'PadHop'
+New-Item -ItemType Directory -Force $data | Out-Null
+$fixture=Join-Path $data 'renewal-test-config.json'
+Set-Content -LiteralPath $fixture '{"test":"keep config unchanged"}'
+$configHash=(Get-FileHash -LiteralPath $fixture).Hash
+$denied=Start-Process powershell.exe -ArgumentList ('-NoProfile -NonInteractive -ExecutionPolicy Bypass -File "'+(Join-Path $app 'Local-Signing.ps1')+'" -Action Renew') -WindowStyle Hidden -PassThru
+try {if(!$denied.WaitForExit(15000) -or $denied.ExitCode -eq 0){throw 'Renewal must require explicit trust consent'}}finally{$denied.Dispose()}
+if((CheckSigned) -ne $first){throw 'Declined renewal changed identity'}
+$renew=Start-Process powershell.exe -ArgumentList ('-NoProfile -ExecutionPolicy Bypass -File "'+(Join-Path $app 'Local-Signing.ps1')+'" -Action Renew -AcceptLocalTrust') -WindowStyle Hidden -PassThru
+try {if(!$renew.WaitForExit(90000)){throw 'Renewal timed out'};if($renew.ExitCode){Get-Content (Join-Path $app 'local-signing-last.log') -Tail 40;throw 'Renewal failed'}}finally{$renew.Dispose()}
+$renewed=CheckSigned
+if((Get-FileHash -LiteralPath $fixture).Hash -ne $configHash){throw 'Renewal changed user configuration'}
+if($renewed -eq $first -or (Test-Path ('Cert:\LocalMachine\Root\'+$first))){throw 'Renewal retained old identity or trust'}
+$first=$renewed
 RunInstall '' $false $true
 if(Test-Path ('Cert:\LocalMachine\Root\'+$first)){throw 'Upgrade retained old local trust'}
 if(Test-Path (Join-Path $app '.local-signing\state.json')){throw 'Upgrade retained old signing state'}

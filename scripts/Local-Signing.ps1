@@ -1,5 +1,5 @@
 ﻿param(
- [ValidateSet('Enable','Disable','RemoveTrust','Status','SelfTest')][string]$Action='Status',
+ [ValidateSet('Enable','Renew','Disable','RemoveTrust','Status','SelfTest')][string]$Action='Status',
  [switch]$AcceptLocalTrust
 )
 $ErrorActionPreference='Stop'
@@ -117,6 +117,14 @@ AssertProtected $root
 $transcript=Join-Path $root 'local-signing-last.log';NoLinks $transcript
 Start-Transcript -LiteralPath $transcript -Force | Out-Null
 try {
+if($Action -eq 'Renew'){
+ if(!$AcceptLocalTrust){throw '续期需要明确同意本机信任变更（-AcceptLocalTrust）。'}
+ if(!$state -or $state.Status -ne 'Enabled'){throw '没有可续期的本机签名，请重新运行安装程序。'}
+ RestoreFiles $root $state
+ RemoveOwnTrust $state
+ CleanState $root
+ $state=$null
+}
 if($Action -in @('Disable','RemoveTrust')){
  if(!$state){'没有需要撤销的本机签名。';return}
  if($Action -eq 'Disable'){RestoreFiles $root $state}

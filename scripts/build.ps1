@@ -74,3 +74,4 @@ foreach($name in @('PadHop.exe','PadHop.Engine.exe','PadHop.Input.exe')){
 }
 @{Product='PadHop';Version=$version;Hashes=$hashes} | ConvertTo-Json -Depth 4 | Set-Content (Join-Path $localPayload 'payload.json') -Encoding UTF8
 Copy-Item (Join-Path $root 'scripts\Local-Signing.ps1') $bin -Force
+Copy-Item (Join-Path $root 'scripts\Renew-LocalSigning.ps1') $bin -Force
