@@ -12,4 +12,4 @@
 
 随后增加并验证 Inno Setup 安装 EXE：独立测试 AppId 下安装、覆盖升级和原生卸载成功，检测并跳过现有 ViGEmBus，卸载保留共享驱动。UIAccess 安装脚本编译通过，签名校验脚本拒绝未签名程序。
 
-本次未执行真实硬件手感测试、完整蓝牙录制、缺少驱动的新机器安装或可信发布证书的 UIAccess 安装。GitHub workflow 尚未在远程运行；其他 Git 托管平台可直接调用同一组 PowerShell 脚本。
+本次未执行真实硬件手感测试、完整蓝牙录制、缺少驱动的新机器安装或可信发布证书的 UIAccess 安装。GitHub master 首次构建已在干净 Windows runner 上通过（https://github.com/csvwolf/padhop/actions/runs/34819171332），包括编译、离线测试、依赖安装与 install.exe 打包。其他 Git 托管平台可直接调用同一组 PowerShell 脚本。
