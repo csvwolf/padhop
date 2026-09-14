@@ -40,6 +40,9 @@ jobs:
           ./scripts/test.ps1 -Python (Get-Command python).Source
           ./scripts/bootstrap-installer.ps1
           ./scripts/build-installer.ps1
+      - name: Test opt-in local signing on disposable runner
+        shell: powershell
+        run: ./scripts/test-installer-ci.ps1
       - uses: actions/upload-artifact@v7.0.1
         with:
           name: PadHop-installer
@@ -71,7 +74,7 @@ jobs:
 
           - Windows 10 1903+ / Windows 11 x64，.NET Framework 4.8。
           - 可选安装 ViGEmBus；已有驱动会跳过，卸载保留个人配置与共享驱动。
-          - **标准实验版，仅支持普通窗口。尚未加入可信发布签名，不能操作管理员窗口。**
+          - **实验版默认仅操作普通窗口；安装时可选本机自签，明确同意后在本机启用管理员窗口操作。未使用公共信任发布者签名。**
           - 安装器需要管理员权限；离线测试通过不代表所有设备、游戏已实测。
           NOTES
           printf '\nSHA-256 (`install.exe`): `%s`\n' "$hash" >> notes.md

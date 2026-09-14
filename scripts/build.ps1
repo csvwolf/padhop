@@ -59,3 +59,18 @@ if($LASTEXITCODE){throw 'Engine tests failed'}
 $t=Start-Process (Join-Path $bin 'PadHop.exe') -ArgumentList '--self-test' -PassThru -WindowStyle Hidden -Wait
 if($t.ExitCode){throw 'UI tests failed (temporary PadHop-tests directory contains error)'}
 'Build and synthetic tests passed: '+$bin+' ('+$mode+')'
+
+# Optional local UIAccess payload stays unsigned until the end user explicitly opts in.
+$localPayload=Join-Path $bin 'local-signing'
+New-Item -ItemType Directory -Force $localPayload | Out-Null
+$oldPayload=Join-Path $localPayload 'PadHop.Input.exe'
+if(Test-Path -LiteralPath $oldPayload){Remove-Item -LiteralPath $oldPayload -Force}
+& $csc /nologo /target:winexe /platform:x64 /warnaserror+ ('/win32manifest:'+(Join-Path $root 'src\helper\uiaccess.manifest')) ('/out:'+(Join-Path $localPayload 'PadHop.Input.UIAccess.exe')) $metadata (Join-Path $root 'src\helper\Helper.cs') (Join-Path $root 'src\engine\MouseWire.cs') (Join-Path $root 'src\engine\DesktopSettings.cs')
+if($LASTEXITCODE){throw 'Optional UIAccess payload build failed'}
+$hashes=@{}
+foreach($name in @('PadHop.exe','PadHop.Engine.exe','PadHop.Input.exe')){
+ $path=if($name -eq 'PadHop.Input.exe'){Join-Path $localPayload 'PadHop.Input.UIAccess.exe'}else{Join-Path $bin $name}
+ $hashes[$name]=(Get-FileHash $path).Hash
+}
+@{Product='PadHop';Version=$version;Hashes=$hashes} | ConvertTo-Json -Depth 4 | Set-Content (Join-Path $localPayload 'payload.json') -Encoding UTF8
+Copy-Item (Join-Path $root 'scripts\Local-Signing.ps1') $bin -Force

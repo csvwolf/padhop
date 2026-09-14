@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.1 — experimental
+
+- Add opt-in local signing in the installer with explicit trust disclosure, one-year local certificates, private-key cleanup, rollback and uninstall cleanup.
+- Include the UIAccess payload and recovery script; users do not need to compile source.
+
 ## 0.2.0 — experimental
 
 - Name the project PadHop and separate source, user data and build outputs.

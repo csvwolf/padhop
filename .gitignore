@@ -22,3 +22,5 @@
 
 *.exe
 *.dll
+
+**/.local-signing/

@@ -1,6 +1,6 @@
 # Code signing policy
 
-当前状态：尚未取得公共信任签名，未提交 SignPath Foundation 申请。现有 Release 为未签名标准实验版。下面是申请准备方案，不代表已获赞助或签名服务已启用。
+当前状态：尚未取得公共信任签名，未提交 SignPath Foundation 申请。默认 Release 为未签名标准实验版；用户可主动选择[本机自签](local-signing.md)，这不代表获得公共信任证书。下面是申请准备方案，不代表已获赞助或签名服务已启用。
 
 优先申请 [SignPath Foundation 免费开源签名](https://signpath.org/)。它要求公开开源源码、已有发行版本、明确的软件说明、MFA、签名角色与人工发布审批；最终资格由基金会审核。
 

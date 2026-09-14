@@ -21,6 +21,7 @@ internal static class MouseHelper
     static void Note(string s) { if(log.BaseStream.Length<262144)log.WriteLine(DateTime.UtcNow.ToString("o") + " " + s.Split(' ')[0]); }
     static int Main(string[] args)
     {
+        if (args.Length == 1 && args[0] == "--check-uiaccess") return HasUIAccess() ? 0 : 2;
         string logDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "PadHop", "logs"); Directory.CreateDirectory(logDirectory);
         string logPath = Path.Combine(logDirectory, "input-" + Process.GetCurrentProcess().Id + ".log");
         using (log = new StreamWriter(logPath))

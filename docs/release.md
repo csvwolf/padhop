@@ -2,7 +2,7 @@
 
 Release 用户附件只提供 `install.exe`（Inno Setup 中文向导），包含可选 ViGEmBus 官方安装程序；检测到已有驱动时跳过。版本信息放在 Release 标题与说明中。当前本地产物为未签名 standard 实验版，不是独立审计的稳定版。仓库保留旧 ZIP 脚本用于开发调试，不作为用户下载入口。
 
-standard 无跨管理员窗口能力；不得把它当作旧私人 UIAccess 测试版本的等价升级。需要完整跨权限体验的发行者应提供可信代码签名证书：
+默认 standard 不操作管理员窗口；用户可主动选择本机自签，详见 local-signing.md。本机信任不是公共发布者签名。需要完整跨权限体验的发行者应提供可信代码签名证书：
 
 ```powershell
 .\scripts\build.ps1 -UiAccess -SigningThumbprint '<当前用户证书库中的发布证书指纹>'

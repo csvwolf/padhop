@@ -55,8 +55,8 @@ internal sealed partial class PadHop
  {
   using(var stream=File.OpenRead(System.IO.Path.Combine(Root,"source","Main.xaml")))window=(Window)XamlReader.Load(stream);
   var icon=new BitmapImage(new Uri(System.IO.Path.Combine(Root,"assets","app.png")));
-  string modeFile=System.IO.Path.Combine(Root,"input-mode.txt");bool uiAccess=File.Exists(modeFile) && File.ReadAllText(modeFile).Trim()=="uiaccess";window.Title=uiAccess?"PadHop · UIAccess":"PadHop · 标准版（普通窗口）";
-  Get<TextBlock>("CapabilityHint").Text=uiAccess?"UIAccess 版：支持普通与提权窗口；大屏模式交还 Steam。":"标准版：支持普通窗口；提权窗口需签名 UIAccess 版。";
+  string modeFile=System.IO.Path.Combine(Root,"input-mode.txt");string mode=File.Exists(modeFile)?File.ReadAllText(modeFile).Trim():"standard";bool local=mode=="local-uiaccess";bool uiAccess=local || mode=="uiaccess";window.Title=local?"PadHop · 本机自签":uiAccess?"PadHop · UIAccess":"PadHop · 标准版（普通窗口）";
+  Get<TextBlock>("CapabilityHint").Text=local?"本机自签：可操作管理员窗口；只在这台电脑上受信任。":uiAccess?"UIAccess 版：支持普通与提权窗口；大屏模式交还 Steam。":"标准版：支持普通窗口；提权窗口需签名 UIAccess 版。";
   window.Icon=icon;Get<Image>("BrandIcon").Source=icon;
   InstallFineWheel();LoadValues();Get<TabControl>("RuleTabs").SelectionChanged+=delegate{RefreshRules();};Get<TabControl>("RuleTabs").SelectedIndex=0;RefreshRules();
   Get<Button>("NavDesktop").Click+=delegate{Navigate("Desktop");};Get<Button>("NavTouch").Click+=delegate{Navigate("Touch");};Get<Button>("NavRules").Click+=delegate{Navigate("Rules");};Get<Button>("NavApps").Click+=delegate{Navigate("Apps");};
