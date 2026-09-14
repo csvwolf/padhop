@@ -105,7 +105,7 @@ end;
 function NextButtonClick(CurPageID: Integer): Boolean;
 begin
   Result := True;
-  if (CurPageID = wpSelectTasks) and LocalSigningSelected then begin
+  if (CurPageID = wpSelectTasks) and LocalSigningSelected and (not WizardSilent) then begin
     LocalTrustConsent := MsgBox('不签：PadHop 可以操作普通窗口，不能操作管理员窗口。' + #13#10#13#10 +
       '签了：在此电脑生成代码签名证书并加入本机根证书信任库，允许 PadHop 通过 UIAccess 操作管理员窗口。Steam 不需要管理员启动。' + #13#10#13#10 +
       '风险：新增的证书信任对本机所有用户生效；若程序或输入流程被滥用，可能影响管理员程序。自签不能证明公共发布者身份，也不保证消除安全软件提示。' + #13#10#13#10 +
@@ -140,7 +140,7 @@ begin
 #if Mode == "uiaccess"
   WizardForm.WelcomeLabel2.Caption := '让 Steam Controller 2 在更多地方用得上，也用得顺手。' + #13#10#13#10 + 'UIAccess 版支持普通与管理员窗口，安装于受保护的 Program Files 目录。';
 #else
-  WizardForm.WelcomeLabel2.Caption := '让 Steam Controller 2 在更多地方用得上，也用得顺手。' + #13#10#13#10 + '当前为标准实验版，仅支持普通窗口。管理员窗口需要使用经过发布签名的 UIAccess 版。';
+  WizardForm.WelcomeLabel2.Caption := '让 Steam Controller 2 在更多地方用得上，也用得顺手。' + #13#10#13#10 + '默认支持普通窗口。可在安装时选择本机自签，经明确同意后启用管理员窗口操作；下一步会说明区别与风险。';
 #endif
   WizardForm.WelcomeLabel2.Caption := WizardForm.WelcomeLabel2.Caption + #13#10#13#10 + '安装会保留个人配置。Xbox 输出驱动可在下一步选择；已有驱动会保留。';
   WizardForm.SelectComponentsLabel.Caption := 'Xbox 输出需要 ViGEmBus；只使用键鼠时可以取消。驱动来自官方最终版 1.22.0，已停止维护。卸载 PadHop 时会保留共享驱动，避免影响其他软件。';
