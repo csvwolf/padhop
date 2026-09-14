@@ -156,7 +156,8 @@ try {
  $mode=Join-Path $root '.local-signing\staged\input-mode.txt';Set-Content $mode 'local-uiaccess' -Encoding ASCII;$signed['input-mode.txt']=Hash $mode
  SaveState $root $state
  foreach($n in $files){Copy-Item -LiteralPath (Join-Path $root ('.local-signing\staged\'+$n)) -Destination (Join-Path $root $n) -Force}
- $probe=Start-Process (Join-Path $root 'PadHop.Input.exe') -ArgumentList '--check-uiaccess' -WindowStyle Hidden -Wait -PassThru
+ $probe=Start-Process (Join-Path $root 'PadHop.Input.exe') -ArgumentList '--check-uiaccess' -WindowStyle Hidden -PassThru
+ if(!$probe.WaitForExit(15000)){$probe.Kill();throw 'UIAccess 检测超时。'}
  if($probe.ExitCode -ne 0){throw 'Windows 未授予 UIAccess；可能被设备策略限制。'}
  $state.Status='Enabled';SaveState $root $state
  '已启用本机 UIAccess。证书指纹：'+$cert.Thumbprint

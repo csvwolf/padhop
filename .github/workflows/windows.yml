@@ -10,7 +10,7 @@ permissions:
   contents: read
 concurrency:
   group: windows-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: ${{ github.ref == 'refs/heads/master' }}
 jobs:
   build:
     runs-on: windows-latest
@@ -41,8 +41,16 @@ jobs:
           ./scripts/bootstrap-installer.ps1
           ./scripts/build-installer.ps1
       - name: Test opt-in local signing on disposable runner
+        timeout-minutes: 5
         shell: powershell
         run: ./scripts/test-installer-ci.ps1
+      - name: Diagnose installer failure
+        if: failure()
+        shell: powershell
+        run: |
+          Get-Content "$env:RUNNER_TEMP/padhop-install.log" -Tail 50 -ErrorAction SilentlyContinue
+          Get-Content "$env:ProgramFiles/PadHop/local-signing-last.log" -Tail 50 -ErrorAction SilentlyContinue
+          Get-Process | Where-Object {$_.ProcessName -match 'install|consent|PadHop|powershell'} | Select-Object ProcessName,Id,MainWindowTitle
       - uses: actions/upload-artifact@v7.0.1
         with:
           name: PadHop-installer
