@@ -15,10 +15,10 @@ New-Item -ItemType Directory -Force $metadataDir | Out-Null
 $metadata=Join-Path $metadataDir 'AssemblyInfo.cs'
 @"
 using System.Reflection;
-[assembly: AssemblyTitle("PadHop")]
-[assembly: AssemblyProduct("PadHop")]
-[assembly: AssemblyCompany("PadHop contributors")]
-[assembly: AssemblyCopyright("Copyright 2026 PadHop contributors")]
+[assembly: AssemblyTitle("Talaria")]
+[assembly: AssemblyProduct("Talaria")]
+[assembly: AssemblyCompany("Talaria contributors")]
+[assembly: AssemblyCopyright("Copyright 2026 Talaria contributors")]
 [assembly: AssemblyVersion("$version.0")]
 [assembly: AssemblyFileVersion("$version.0")]
 [assembly: AssemblyInformationalVersion("$version")]

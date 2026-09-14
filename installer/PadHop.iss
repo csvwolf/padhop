@@ -11,9 +11,9 @@
 
 [Setup]
 AppId={#AppIdentifier}
-AppName=PadHop
+AppName=Talaria
 AppVersion={#ProductVersion}
-AppPublisher=PadHop contributors
+AppPublisher=Talaria contributors
 DefaultDirName={autopf}\PadHop
 DisableDirPage=yes
 DisableProgramGroupPage=yes
@@ -34,7 +34,7 @@ CloseApplications=yes
 RestartApplications=no
 AppMutex=Local\PadHopUI
 Uninstallable=yes
-UninstallDisplayName=PadHop
+UninstallDisplayName=Talaria
 DisableWelcomePage=no
 SetupLogging=yes
 
@@ -45,16 +45,16 @@ Name: "zhcn"; MessagesFile: "compiler:Default.isl,ChineseSimplified.isl"
 [CustomMessages]
 zhcn.Option0=自定义安装
 en.Option0=Custom installation
-zhcn.Option1=PadHop 主程序
-en.Option1=PadHop application
+zhcn.Option1=Talaria 主程序
+en.Option1=Talaria application
 zhcn.Option2=Xbox 手柄输出支持（按需安装 ViGEmBus）
 en.Option2=Xbox controller output (optional ViGEmBus)
 zhcn.Option3=管理员窗口操作（本机自签，需确认信任风险）
 en.Option3=Administrator-window control (local signing; consent required)
 zhcn.Option4=创建桌面快捷方式
 en.Option4=Create a desktop shortcut
-zhcn.Option5=启动 PadHop
-en.Option5=Launch PadHop
+zhcn.Option5=启动 Talaria
+en.Option5=Launch Talaria
 
 [Types]
 Name: "custom"; Description: "{cm:Option0}"; Flags: iscustom
@@ -84,8 +84,12 @@ Source: "{#Root}\docs\*"; DestDir: "{app}\docs"; Flags: ignoreversion
 Source: "{#Root}\scripts\configure-capture.ps1"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
-Name: "{autoprograms}\{#AppIdentifier}"; Filename: "{app}\PadHop.exe"
-Name: "{autodesktop}\{#AppIdentifier}"; Filename: "{app}\PadHop.exe"; Tasks: desktopicon
+Name: "{autoprograms}\Talaria"; Filename: "{app}\PadHop.exe"
+Name: "{autodesktop}\Talaria"; Filename: "{app}\PadHop.exe"; Tasks: desktopicon
+
+[InstallDelete]
+Type: files; Name: "{autoprograms}\PadHop.lnk"
+Type: files; Name: "{autodesktop}\PadHop.lnk"
 
 [UninstallDelete]
 Type: files; Name: "{app}\local-signing-last.log"
@@ -128,8 +132,8 @@ function NextButtonClick(CurPageID: Integer): Boolean;
 begin
   Result := True;
   if (CurPageID = wpSelectComponents) and LocalSigningSelected and (not WizardSilent) then begin
-    LocalTrustConsent := MsgBox(Tr('不签：PadHop 可以操作普通窗口，不能操作管理员窗口。', 'Without signing: PadHop controls ordinary windows, but cannot control administrator windows.') + #13#10#13#10 +
-      Tr('签了：在此电脑生成代码签名证书并加入本机根证书信任库，允许 PadHop 通过 UIAccess 操作管理员窗口。Steam 不需要管理员启动。', 'With signing: create a code-signing certificate on this PC, trust it in the machine root store, and use UIAccess to control administrator windows. Steam can remain unelevated.') + #13#10#13#10 +
+    LocalTrustConsent := MsgBox(Tr('不签：Talaria 可以操作普通窗口，不能操作管理员窗口。', 'Without signing: Talaria controls ordinary windows, but cannot control administrator windows.') + #13#10#13#10 +
+      Tr('签了：在此电脑生成代码签名证书并加入本机根证书信任库，允许 Talaria 通过 UIAccess 操作管理员窗口。Steam 不需要管理员启动。', 'With signing: create a code-signing certificate on this PC, trust it in the machine root store, and use UIAccess to control administrator windows. Steam can remain unelevated.') + #13#10#13#10 +
       Tr('风险：新增的证书信任对本机所有用户生效；若程序或输入流程被滥用，可能影响管理员程序。自签不能证明公共发布者身份，也不保证消除安全软件提示。', 'Risk: this trust applies to all users of this PC. Abuse of the app or input path could affect administrator programs. Self-signing does not establish a public publisher identity or guarantee removal of security warnings.') + #13#10#13#10 +
       Tr('私钥正常完成后会删除，不导出、不上传。证书一年到期；升级前还原，卸载时移除本项目证书，也可手动撤销。不会关闭 UAC 或更改 Secure Boot。', 'The private key is deleted after normal completion, never exported or uploaded. The certificate lasts one year. Upgrades restore the old files first; uninstall removes this certificate. Manual revocation is also available. UAC and Secure Boot are unchanged.') + #13#10#13#10 +
       Tr('是否明确同意本次本机信任变更？', 'Do you explicitly agree to this local trust change?'), mbConfirmation, MB_YESNO or MB_DEFBUTTON2) = IDYES;
@@ -158,7 +162,7 @@ end;
 
 procedure InitializeWizard;
 begin
-  WizardForm.WelcomeLabel1.Caption := Tr('欢迎安装 PadHop · 跃控', 'Welcome to PadHop');
+  WizardForm.WelcomeLabel1.Caption := Tr('欢迎安装 Talaria', 'Welcome to Talaria');
 #if Mode == "uiaccess"
   WizardForm.WelcomeLabel2.Caption := Tr('让 Steam Controller 2 在更多地方用得上，也用得顺手。', 'Make Steam Controller 2 useful in more places.') + #13#10#13#10 + Tr('UIAccess 版支持普通与管理员窗口，安装于受保护的 Program Files 目录。', 'UIAccess supports ordinary and administrator windows and installs in protected Program Files.');
 #else
@@ -191,7 +195,7 @@ begin
   end;
   if FileExists(ExpandConstant('{app}\.local-signing\state.json')) then begin
     if not RunLocalSigning('Disable', False) then begin
-      Result := Tr('无法还原已有本机签名。请退出 PadHop 后重试；必要时运行 Local-Signing.ps1 -Action Disable。', 'Cannot restore the existing local signature. Exit PadHop and retry, or run Local-Signing.ps1 -Action Disable.');
+      Result := Tr('无法还原已有本机签名。请退出 Talaria 后重试；必要时运行 Local-Signing.ps1 -Action Disable。', 'Cannot restore the existing local signature. Exit Talaria and retry, or run Local-Signing.ps1 -Action Disable.');
       exit;
     end;
   end;
@@ -206,7 +210,7 @@ begin
   ExtractTemporaryFile('Verify-UIAccess.ps1');
   if not Exec(ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'), '-NoProfile -ExecutionPolicy Bypass -File "' + ExpandConstant('{tmp}\Verify-UIAccess.ps1') + '"', '', SW_HIDE, ewWaitUntilTerminated, Code) then Code := -1;
   if Code <> 0 then begin
-    Result := Tr('本机无法验证 PadHop 发布者签名。请使用可信发布版；安装器不会导入测试证书。', 'This PC cannot verify the PadHop publisher signature. Use a trusted release; this installer will not import test certificates.');
+    Result := Tr('本机无法验证 Talaria 发布者签名。请使用可信发布版；安装器不会导入测试证书。', 'This PC cannot verify the Talaria publisher signature. Use a trusted release; this installer will not import test certificates.');
     exit;
   end;
 #endif
@@ -240,7 +244,7 @@ begin
     LocalSigningFailed := not RunLocalSigning('Enable', True);
     if LocalSigningFailed then begin
       Log('Local signing failed. Check local-signing state before using elevated windows.');
-      if not WizardSilent then MsgBox(Tr('PadHop 已安装，但本机自签没有成功。请查看安装日志；可在管理员 PowerShell 中运行 Local-Signing.ps1 -Action Status 检查状态。未验证成功前请按普通窗口模式使用。', 'PadHop is installed, but local signing failed. Review the installation log. Run Local-Signing.ps1 -Action Status in administrator PowerShell to check. Use ordinary-window mode until verification succeeds.'), mbError, MB_OK);
+      if not WizardSilent then MsgBox(Tr('Talaria 已安装，但本机自签没有成功。请查看安装日志；可在管理员 PowerShell 中运行 Local-Signing.ps1 -Action Status 检查状态。未验证成功前请按普通窗口模式使用。', 'Talaria is installed, but local signing failed. Review the installation log. Run Local-Signing.ps1 -Action Status in administrator PowerShell to check. Use ordinary-window mode until verification succeeds.'), mbError, MB_OK);
     end;
   end;
 end;

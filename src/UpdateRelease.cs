@@ -23,16 +23,16 @@ internal sealed class UpdateRelease
    foreach(var value in (IEnumerable)release["assets"]){var asset=value as Dictionary<string,object>;if(asset==null || Convert.ToString(asset["name"])!="install.exe")continue;
     string url=Convert.ToString(asset["browser_download_url"]),digest=asset.ContainsKey("digest")?Convert.ToString(asset["digest"]):"";
     long size=Convert.ToInt64(asset["size"]);
-    if(url!="https://github.com/csvwolf/padhop/releases/download/"+tag+"/install.exe" || !Regex.IsMatch(digest,@"^sha256:[a-fA-F0-9]{64}$") || size<1 || size>134217728)continue;
+    if((url!="https://github.com/csvwolf/talaria/releases/download/"+tag+"/install.exe" && url!="https://github.com/csvwolf/padhop/releases/download/"+tag+"/install.exe") || !Regex.IsMatch(digest,@"^sha256:[a-fA-F0-9]{64}$") || size<1 || size>134217728)continue;
     selected=new UpdateRelease{Version=tag.Substring(1),Url=url,Digest=digest.Substring(7),Size=size};newest=version;
    }
   }
   return selected;
  }
- internal static UpdateRelease FindNewer(string current){return Parse(Encoding.UTF8.GetString(Fetch("https://api.github.com/repos/csvwolf/padhop/releases?per_page=30",2097152)),current);}
+ internal static UpdateRelease FindNewer(string current){return Parse(Encoding.UTF8.GetString(Fetch("https://api.github.com/repos/csvwolf/talaria/releases?per_page=30",2097152)),current);}
  static byte[] Fetch(string url,int limit){
   ServicePointManager.SecurityProtocol|=SecurityProtocolType.Tls12;
-  var request=(HttpWebRequest)WebRequest.Create(url);request.UserAgent="PadHop-Updater";request.Timeout=30000;request.ReadWriteTimeout=30000;
+  var request=(HttpWebRequest)WebRequest.Create(url);request.UserAgent="Talaria-Updater";request.Timeout=30000;request.ReadWriteTimeout=30000;
   using(var response=(HttpWebResponse)request.GetResponse()){
    if(response.ResponseUri.Scheme!="https" || response.ContentLength>limit)throw new Exception(L.T("更新响应不符合要求"));
    using(var stream=response.GetResponseStream())using(var result=new MemoryStream()){
@@ -48,7 +48,8 @@ internal sealed class UpdateRelease
  }
  internal void Verify(string path){if(new FileInfo(path).Length!=Size)throw new Exception(L.T("更新文件已改变，请重新检查更新"));using(var stream=File.OpenRead(path))using(var hash=SHA256.Create()){if(!string.Equals(BitConverter.ToString(hash.ComputeHash(stream)).Replace("-",""),Digest,StringComparison.OrdinalIgnoreCase))throw new Exception(L.T("更新文件已改变，请重新检查更新"));}}
  internal static void Test(){
-  string asset="{\"draft\":false,\"tag_name\":\"v9.0.0\",\"assets\":[{\"name\":\"install.exe\",\"size\":12,\"digest\":\"sha256:"+new string('a',64)+"\",\"browser_download_url\":\"https://github.com/csvwolf/padhop/releases/download/v9.0.0/install.exe\"}]}";
+  string asset="{\"draft\":false,\"tag_name\":\"v9.0.0\",\"assets\":[{\"name\":\"install.exe\",\"size\":12,\"digest\":\"sha256:"+new string('a',64)+"\",\"browser_download_url\":\"https://github.com/csvwolf/talaria/releases/download/v9.0.0/install.exe\"}]}";
   if(Parse("["+asset+"]","1.0.0")==null || Parse("["+asset+"]","9.0.0")!=null || Parse("["+asset.Replace("github.com/csvwolf","github.com/other")+"]","1.0.0")!=null || Parse("["+asset.Replace("sha256:","invalid:")+"]","1.0.0")!=null)throw new Exception("Update provenance/version test");
+  if(Parse("["+asset.Replace("csvwolf/talaria","csvwolf/padhop")+"]","1.0.0")==null || Parse("["+asset.Replace("csvwolf/talaria","csvwolf/talaria-fake")+"]","1.0.0")!=null)throw new Exception("Rename URL compatibility");
  }
 }

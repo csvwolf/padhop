@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.5 — Talaria
+
+- Rename the app to Talaria with the approved anime mecha wing icon in the UI, tray and installer.
+- Preserve PadHop installation, settings and signing identities for upgrades.
+- Update GitHub links and accept both old and new release asset URLs.
+- Older versions need one manual installer download after the repository rename.
+
 ## 0.2.4 — experimental
 
 - 软件、安装向导及本机签名维护支持简体中文 / English；关于页可选择语言，重启生效。

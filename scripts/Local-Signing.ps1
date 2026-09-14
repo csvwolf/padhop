@@ -114,7 +114,7 @@ if($Action -eq 'Status'){
 }
 $admin=([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 if(!$admin){throw (T '请以管理员身份运行 PowerShell，再执行此脚本。')}
-if(Get-Process PadHop,PadHop.Engine,PadHop.Input -ErrorAction SilentlyContinue){throw (T '请先从托盘退出 PadHop。')}
+if(Get-Process PadHop,PadHop.Engine,PadHop.Input -ErrorAction SilentlyContinue){throw (T '请先从托盘退出 Talaria。')}
 AssertProtected $root
 $transcript=Join-Path $root 'local-signing-last.log';NoLinks $transcript
 Start-Transcript -LiteralPath $transcript -Force | Out-Null
@@ -139,7 +139,7 @@ if($state){throw (T '已经存在本机签名或未完成记录。请先执行 -
 if((Get-Content (Join-Path $root 'input-mode.txt') -Raw).Trim() -ne 'standard'){throw (T '仅对标准版启用本机自签。')}
 VerifyPayload $root
 if(!$AcceptLocalTrust){
- Write-Host (T '将向本机（所有用户）的受信任根证书库添加一张仅用于代码签名的本机证书。仅签署 PadHop 的三个程序；私钥不可导出并在本次操作后删除。证书一年后到期，届时需重新签名。不会修改 UAC、Secure Boot 或 Steam 权限。')
+ Write-Host (T '将向本机（所有用户）的受信任根证书库添加一张仅用于代码签名的本机证书。仅签署 Talaria 的三个程序；私钥不可导出并在本次操作后删除。证书一年后到期，届时需重新签名。不会修改 UAC、Secure Boot 或 Steam 权限。')
  if((Read-Host (T '明确同意此信任变更请输入 YES')) -cne 'YES'){throw (T '用户取消，未修改证书。')}
 }
 $cert=$null;$state=$null
@@ -152,7 +152,7 @@ try {
   Copy-Item -LiteralPath $source -Destination (Join-Path $root ('.local-signing\staged\'+$n)) -Force
  }
  $subject='CN=PadHop Local Only '+[guid]::NewGuid().ToString()
- $cert=New-SelfSignedCertificate -Type CodeSigningCert -Subject $subject -FriendlyName (T 'PadHop 本机自签（非公共发行证书）') -CertStoreLocation Cert:\CurrentUser\My -KeyAlgorithm RSA -KeyLength 3072 -HashAlgorithm SHA256 -KeyExportPolicy NonExportable -NotAfter (Get-Date).AddYears(1)
+ $cert=New-SelfSignedCertificate -Type CodeSigningCert -Subject $subject -FriendlyName (T 'Talaria 本机自签（非公共发行证书）') -CertStoreLocation Cert:\CurrentUser\My -KeyAlgorithm RSA -KeyLength 3072 -HashAlgorithm SHA256 -KeyExportPolicy NonExportable -NotAfter (Get-Date).AddYears(1)
  $state=@{Product='PadHop';Thumbprint=$cert.Thumbprint;Subject=$subject;Expires=$cert.NotAfter.ToString('o');Original=$original;Signed=$signed;Status='Preparing'}
  SaveState $root $state
  $store=New-Object Security.Cryptography.X509Certificates.X509Store('Root','LocalMachine')

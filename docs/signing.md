@@ -6,7 +6,7 @@
 
 拟由仓库维护者 [csvwolf](https://github.com/csvwolf) 担任作者、审查者和签名批准人，提交申请前需本人确认角色、MFA 状态及服务条款。审批通过后，按服务方要求更新此处的赞助署名。
 
-签名仅针对 PadHop 自己构建的程序。ViGEmBus 官方安装程序保持原签名；ViGEmClient 等第三方文件保留原有归属，不使用本项目凭证重新签名。程序产品名与版本由 VERSION 统一生成。
+签名仅针对 Talaria 自己构建的程序。ViGEmBus 官方安装程序保持原签名；ViGEmClient 等第三方文件保留原有归属，不使用本项目凭证重新签名。程序产品名与版本由 VERSION 统一生成。
 
 预期发行顺序：GitHub 托管 runner 编译 UIAccess 程序 → 提交程序签名 → 验证签名 → 构建 Inno Setup 安装器及卸载器 → 按服务方批准的配置完成签名 → 发布唯一附件 install.exe。需要同时确认内嵌卸载器的签名方式，不能只签安装 EXE 外壳就声称 UIAccess 已就绪。
 
